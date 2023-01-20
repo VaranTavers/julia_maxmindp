@@ -4,11 +4,11 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ a1028eb0-5dd5-11ed-3893-69ea980733df
+# ╔═╡ 734cb200-8d11-11ed-066a-8315420f7cf3
 begin
-	using Graphs
-	using SimpleWeightedGraphs
-	using GraphIO
+    using Graphs
+    using SimpleWeightedGraphs
+    using GraphIO
 	using Folds
 	using Base.Iterators
 	using CSV
@@ -18,143 +18,98 @@ begin
 	using Random
 end
 
-# ╔═╡ 61a473d9-175e-43c7-85e5-9f558d40cef8
+# ╔═╡ a8ea292b-249f-417f-831a-def297b89b89
+function ingredients(path::String)
+	# this is from the Julia source code (evalfile in base/loading.jl)
+	# but with the modification that it returns the module instead of the last object
+	name = Symbol(basename(path))
+	m = Module(name)
+	Core.eval(m,
+        Expr(:toplevel,
+             :(eval(x) = $(Expr(:core, :eval))($name, x)),
+             :(include(x) = $(Expr(:top, :include))($name, x)),
+             :(include(mapexpr::Function, x) = $(Expr(:top, :include))(mapexpr, $name, x)),
+             :(include($path))))
+	m
+end
+
+# ╔═╡ e0721c9e-4043-4826-9bb4-5dc87d6f670d
+begin
+	graph_functions_jl = ingredients("graph_utils.jl")
+	import .graph_functions_jl: read_edge_list_weighted, subgraph
+	laplace_centrality_jl = ingredients("laplace_centrality.jl")
+	import .laplace_centrality_jl: lap_cent_weighted
+	greedy_base_jl = ingredients("greedy_base.jl") 
+	import .greedy_base_jl: greedy_k_cent
+end
+
+# ╔═╡ 20f7bc4f-f819-4dab-97c9-56ddac7802d6
 g = loadgraph("mmdp_graphs/01Type1_52.1_n500m200.lgz", SWGFormat())
 
-# ╔═╡ 1f1fdf59-5ba0-44d9-afad-65e0abce6e52
-min_dists = g.weights #calculate_all_min_distances(g)
+# ╔═╡ 94583779-11f2-423f-bc03-ae7e95cee6d0
+closeness_centrality(g)
 
-# ╔═╡ 01c7dcaa-cefb-42b1-aa8a-4b3e98995aee
-function calculate_mindist(g, vertices, min_distances)
-	
-	dist_sums = map(i -> map(j -> min_distances[i, j], vertices), vertices)
-
-	minimum(map(sum,dist_sums))
-end
-
-# ╔═╡ 23197168-7590-4ef6-8531-d60b98d04292
-function maxmindp_random(g, k)
-	randperm(nv(g))[1:k]
-end
-
-# ╔═╡ eb5e43e9-6306-428a-b69c-4880fcffcc41
-function has_duplicates(v, newPointId)
-	for i in 1:length(v)
-		if i != newPointId && v[i] == v[newPointId]
-			return true
-		end
-	end
-	false
-end
-
-# ╔═╡ 9d4dd891-f165-435a-bcac-fc7f5654447a
-function mutate(g, v)
-	changeId = rand(1:length(v))
-	v[changeId] = rand(1:nv(g))
-	while has_duplicates(v, changeId)
-		v[changeId] = rand(1:nv(g))
-	end
-
-	v
-end
-
-# ╔═╡ a925abac-4188-412b-b384-b4909e0995a0
-function crossover(v1, v2)
-	v3 = copy(v1)
-	append!(v3, v2)
-	v3 = unique(sort(v3))
-	collect(shuffle(v3))[1:length(v1)]
-end
-
-# ╔═╡ 77e9e571-d728-41f6-a63f-ae159645b281
-sortperm([2,3,1])
-
-# ╔═╡ 85d312a8-7e9e-4b03-922c-a7f9f6489a80
-function maxmindp_genetic_dist(g, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate)
-	people = [maxmindp_random(g, k) for i in 1:numberOfPeople]
-	max_val = 0
-	max_vec = zeros(k)
-	for i in 1:numberOfIterations
-		people = collect(map(x -> rand() < mutationRate ? mutate(g, x) : x, people))
-		
-		scores = map(x -> calculate_mindist(g, x, weights(g)), people)
-		score_sorted = sortperm(scores)
-
-		if scores[score_sorted[1]] > max_val
-			max_val = scores[score_sorted[1]]
-			max_vec = copy(people[score_sorted[1]])
-		end
-
-		halfOfPeople = Int32(floor(numberOfPeople/2))
-		people = collect(map(x->people[x], score_sorted[end-halfOfPeople+1:end]))
-
-		for j in halfOfPeople+1:numberOfPeople
-			push!(people, crossover(people[rand(1:halfOfPeople)],  people[rand(1:halfOfPeople)]))
-		end
-	end
-
-	max_vec, max_val
-end
-
-# ╔═╡ f075bd05-8dde-481d-8b0f-1d57eed6c20e
-maxmindp_genetic_dist(g, 200, 1000, 100, 0.1, 0.2)
-
-# ╔═╡ 2b67893c-8dc0-49ea-917b-6604f82258fe
-function read_edge_list_weighted(filename)
-	csv = CSV.read(filename, DataFrame; header=false, delim=" ")
-	labels = unique(sort(vcat(csv[:, 1], csv[:, 2])))
-	n = length(labels)
-	g = SimpleWeightedGraph(n)
-	for row in eachrow(csv)
-		if length(row) < 3
-			@show "bad row"
-			@show row
-			continue
-		end
-		weight = row[3]
-		if weight == 0
-			weight = 0.000001
-		end
-		if findfirst(x -> x == row[2], labels) == nothing
-			@show labels
-			@show row
-		end
-		point_a = findfirst(x -> x == row[1], labels)
-		point_b = findfirst(x -> x == row[2], labels)
-		
-		add_edge!(g, point_a, point_b, row[3])
-		add_edge!(g, point_b, point_a, row[3])
-	end
-
-	g, labels
-end
-
-# ╔═╡ f0232d89-8acf-4222-bcd4-b35d28e3d42b
+# ╔═╡ a5347742-13eb-4205-b95e-7f541653f089
 begin
-	files = readdir("./mmdp_graphs")
-	files = collect(filter(x -> x[end-3:end] == ".txt", files))
+	g_valid = SimpleWeightedGraph(6)
+	add_edge!(g_valid, 1, 2, 4)
+	add_edge!(g_valid, 1, 3, 2)
+	add_edge!(g_valid, 3, 2, 1)
+	add_edge!(g_valid, 2, 4, 2)
+	add_edge!(g_valid, 2, 5, 2)
+	add_edge!(g_valid, 5, 6, 1)
+
+	lap_cent_weighted(g_valid, norm=true)
 end
 
-# ╔═╡ c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
-df = DataFrame(graphs = files, 
-	genetic=zeros(length(files)),
-	)
-
-# ╔═╡ 8bed605d-4cff-4647-ae9e-e52d38925b1c
-for (i,f) in enumerate(files)
-	g, _ = read_edge_list_weighted("mmdp_graphs/$(f)")
-	m_location = findfirst(x-> x == 'm', f)
-	dot_location = findfirst(x-> x == '.', f)
-	m = parse(Int64, f[m_location + 1:dot_location-1])
-	genetic, w = maxmindp_genetic_dist(g, m, 1000, 100, 0.1, 0.2)
-	df[i, "genetic"] = w
+# ╔═╡ fbc500b5-44fe-42f1-bccc-f879aaf5e5be
+function calculate_cent(g, cent, nbunch)
+	values = cent(g, nbunch)
+	
+	minimum(values)
 end
 
-# ╔═╡ a29138b1-741f-4248-9e92-41736ce57d00
-df
+# ╔═╡ ab577d86-f2dc-4aed-9b7c-cebe32c28778
+function vector_with(v, x)
+	vv = copy(v)
+	push!(vv, x)
 
-# ╔═╡ a9b1c20b-4596-4b35-923d-38a6f7e31b30
-CSV.write("results.csv", df)
+	vv
+end
+
+# ╔═╡ dc1d9186-58d8-4504-aa6d-b2e652bbcd1c
+function maxmindp_greedy_maxcent(g, cent, k)
+	min_dists = copy(g.weights)
+	
+	furthest = argmax(mean(min_dists, dims=2)[:])
+	points = zeros(Int64, k)
+	points[1] = furthest
+
+	for i in 2:k
+		mindps = map(x -> calculate_cent(g, cent, vector_with(points[1:(i-1)], x)), 1:nv(g))
+		for j in 1:i
+			mindps[j] = 0
+		end
+		furthest = argmax(mindps)
+		points[i] = furthest
+	end
+
+	points
+end
+
+# ╔═╡ 4829c63f-5c6a-4167-918c-1b3ebceb7855
+function maxmincent_greedy(g, cent, k)
+	greedy_k_cent(g, cent, k, argmax, minimum)
+end
+
+# ╔═╡ a515814b-3c66-489d-aee5-46f177ef9a66
+result = maxmindp_greedy_maxcent(g, lap_cent_weighted, 3)
+
+# ╔═╡ 3a5918ca-e1a7-4689-8650-f0d30cf501e9
+maxmincent_greedy(g, lap_cent_weighted, 3)
+
+# ╔═╡ 645d763a-d627-418b-a4dc-65092eeff530
+minimum(closeness_centrality(subgraph(g, result)))
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -170,7 +125,7 @@ SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-CSV = "~0.10.8"
+CSV = "~0.10.9"
 DataFrames = "~1.4.4"
 Folds = "~0.2.8"
 GraphIO = "~0.6.0"
@@ -185,13 +140,13 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "5c1a8361f7e570ffc115f7120531a5dd7318fb0b"
+project_hash = "7c87626be4872d689bd98eb336eaf142f374da4e"
 
 [[deps.Accessors]]
 deps = ["Compat", "CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "LinearAlgebra", "MacroTools", "Requires", "Test"]
-git-tree-sha1 = "eb7a1342ff77f4f9b6552605f27fd432745a53a3"
+git-tree-sha1 = "3fa8cc751763c91a5ea33331e523221009cb1e6f"
 uuid = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
-version = "0.1.22"
+version = "0.1.23"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra"]
@@ -229,9 +184,9 @@ version = "0.1.1"
 
 [[deps.CSV]]
 deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "SnoopPrecompile", "Tables", "Unicode", "WeakRefStrings", "WorkerUtilities"]
-git-tree-sha1 = "8c73e96bd6817c2597cfd5615b91fca5deccf1af"
+git-tree-sha1 = "c700cce799b51c9045473de751e9319bdd1c6e94"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.10.8"
+version = "0.10.9"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -247,9 +202,9 @@ version = "0.11.4"
 
 [[deps.Colors]]
 deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
-git-tree-sha1 = "417b0ed7b8b838aa6ca0a87aadf1bb9eb111ce40"
+git-tree-sha1 = "fc08e5930ee9a4e03f84bfb5211cb54e7769758a"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
-version = "0.12.8"
+version = "0.12.10"
 
 [[deps.Compat]]
 deps = ["Dates", "LinearAlgebra", "UUIDs"]
@@ -285,9 +240,9 @@ uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "4.1.1"
 
 [[deps.DataAPI]]
-git-tree-sha1 = "e08915633fcb3ea83bf9d6126292e5bc5c739922"
+git-tree-sha1 = "e8119c1a33d267e16108be441a287a6981ba1630"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
-version = "1.13.0"
+version = "1.14.0"
 
 [[deps.DataFrames]]
 deps = ["Compat", "DataAPI", "Future", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrettyTables", "Printf", "REPL", "Random", "Reexport", "SnoopPrecompile", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
@@ -459,9 +414,9 @@ version = "0.1.3"
 
 [[deps.Missings]]
 deps = ["DataAPI"]
-git-tree-sha1 = "bf210ce90b6c9eed32d25dbcae1ebc565df2687f"
+git-tree-sha1 = "f66bdc5de519e8f8ae43bdc598782d35a25b1272"
 uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-version = "1.0.2"
+version = "1.1.0"
 
 [[deps.Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
@@ -478,9 +433,9 @@ version = "1.4.1"
 
 [[deps.Parsers]]
 deps = ["Dates", "SnoopPrecompile"]
-git-tree-sha1 = "b64719e8b4504983c7fca6cc9db3ebc8acc2a4d6"
+git-tree-sha1 = "6466e524967496866901a78fca3f2e9ea445a559"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "2.5.1"
+version = "2.5.2"
 
 [[deps.PooledArrays]]
 deps = ["DataAPI", "Future"]
@@ -584,9 +539,9 @@ version = "0.1.15"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "Random", "StaticArraysCore", "Statistics"]
-git-tree-sha1 = "ffc098086f35909741f71ce21d03dadf0d2bfa76"
+git-tree-sha1 = "6954a456979f23d05085727adb17c4551c19ecd1"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.5.11"
+version = "1.5.12"
 
 [[deps.StaticArraysCore]]
 git-tree-sha1 = "6b7ba252635a5eff6a0b0664a41ee140a1c9e72a"
@@ -672,22 +627,18 @@ version = "5.1.1+0"
 """
 
 # ╔═╡ Cell order:
-# ╠═a1028eb0-5dd5-11ed-3893-69ea980733df
-# ╠═61a473d9-175e-43c7-85e5-9f558d40cef8
-# ╠═1f1fdf59-5ba0-44d9-afad-65e0abce6e52
-# ╠═01c7dcaa-cefb-42b1-aa8a-4b3e98995aee
-# ╠═23197168-7590-4ef6-8531-d60b98d04292
-# ╠═eb5e43e9-6306-428a-b69c-4880fcffcc41
-# ╠═9d4dd891-f165-435a-bcac-fc7f5654447a
-# ╠═a925abac-4188-412b-b384-b4909e0995a0
-# ╠═77e9e571-d728-41f6-a63f-ae159645b281
-# ╠═85d312a8-7e9e-4b03-922c-a7f9f6489a80
-# ╠═f075bd05-8dde-481d-8b0f-1d57eed6c20e
-# ╠═2b67893c-8dc0-49ea-917b-6604f82258fe
-# ╠═f0232d89-8acf-4222-bcd4-b35d28e3d42b
-# ╠═c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
-# ╠═8bed605d-4cff-4647-ae9e-e52d38925b1c
-# ╠═a29138b1-741f-4248-9e92-41736ce57d00
-# ╠═a9b1c20b-4596-4b35-923d-38a6f7e31b30
+# ╠═734cb200-8d11-11ed-066a-8315420f7cf3
+# ╠═a8ea292b-249f-417f-831a-def297b89b89
+# ╠═e0721c9e-4043-4826-9bb4-5dc87d6f670d
+# ╠═20f7bc4f-f819-4dab-97c9-56ddac7802d6
+# ╠═94583779-11f2-423f-bc03-ae7e95cee6d0
+# ╠═a5347742-13eb-4205-b95e-7f541653f089
+# ╠═fbc500b5-44fe-42f1-bccc-f879aaf5e5be
+# ╠═ab577d86-f2dc-4aed-9b7c-cebe32c28778
+# ╠═dc1d9186-58d8-4504-aa6d-b2e652bbcd1c
+# ╠═4829c63f-5c6a-4167-918c-1b3ebceb7855
+# ╠═a515814b-3c66-489d-aee5-46f177ef9a66
+# ╠═3a5918ca-e1a7-4689-8650-f0d30cf501e9
+# ╠═645d763a-d627-418b-a4dc-65092eeff530
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
