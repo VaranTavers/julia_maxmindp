@@ -16,6 +16,7 @@ begin
 	using GraphPlot
 	using Statistics
 	using Random
+	using Dates
 end
 
 # ╔═╡ 5296ebb5-46c2-4d0e-9437-d1ee0ebc7f25
@@ -36,44 +37,12 @@ end
 # ╔═╡ 77e37ef3-fd63-47b6-b2fb-040b3a22dd90
 begin
 	g_utils_jl = ingredients("graph_utils.jl")
-	import .g_utils_jl: WELFormat, loadgraph, loadgraphs, read_edge_list_weighted
+	import .g_utils_jl: WELFormat, loadgraph, loadgraphs, read_edge_list_weighted, calculate_mindist
 	greedy_jl = ingredients("mmdp_greedy.jl")
-	import .greedy_jl: calculate_mindist, maxmindp_greedy_mindp
+	import .greedy_jl: maxmindp_greedy_mindp
+	own_genetic_jl = ingredients("mmdp_own_genetic.jl")
+	import .own_genetic_jl: maxmindp_genetic_dist, maxmindp_genetic_dist2
 end
-
-# ╔═╡ 61a473d9-175e-43c7-85e5-9f558d40cef8
-g = loadgraph("mmdp_graphs/01Type1_52.1_n500m200.dat", WELFormat())
-
-# ╔═╡ 1f1fdf59-5ba0-44d9-afad-65e0abce6e52
-min_dists = g.weights #calculate_all_min_distances(g)
-
-# ╔═╡ 40a4d5db-edb2-4667-af36-80edba8e9ad4
-function maxmindp_random(g, k)
-	randperm(nv(g))[1:k]
-end
-
-# ╔═╡ f026cad9-6708-440c-a2f7-30418b2de881
-begin
-	random = maxmindp_random(g, 200)
-	calculate_mindist(random, g.weights)
-end
-
-# ╔═╡ 82116829-f886-4fa8-9aeb-15044b769759
-begin
-	greedy2 = maxmindp_greedy_mindp(nv(g), 200, g.weights)
-	calculate_mindist(greedy2, g.weights)
-end
-
-# ╔═╡ c8687b1f-97d9-4d20-a9f0-552303470c16
-begin
-# SBTS
-	sbts = [79, 410, 130, 353, 365, 129, 258, 208, 142, 412, 155, 426, 355, 164, 238, 89, 91, 213, 136, 405, 282, 60, 406, 226, 239, 162, 368, 78, 168, 483, 399, 446, 83, 82, 263, 273, 25, 292, 55, 304, 8, 314, 413, 158, 402, 302, 27, 350, 458, 246, 359, 5, 440, 113, 161, 241, 50, 231, 333, 43, 478, 320, 432, 463, 29, 378, 167, 489, 386, 84, 442, 132, 448, 65, 421, 189, 394, 170, 423, 159, 109, 235, 266, 14, 71, 351, 411, 249, 490, 334, 221, 339, 427, 38, 366, 481, 105, 393, 375, 269, 110, 100, 315, 298, 254, 41, 275, 485, 389, 408, 488, 139, 329, 36, 206, 476, 417, 116, 299, 15, 347, 242, 234, 265, 112, 237, 420, 492, 34, 223, 52, 422, 464, 434, 264, 272, 119, 344, 361, 475, 280, 285, 220, 291, 318, 47, 425, 349, 156, 107, 296, 212, 177, 374, 196, 23, 465, 279, 479, 487, 433, 337, 480, 419, 96, 439, 362, 154, 397, 460, 98, 37, 268, 232, 332, 468, 151, 200, 222, 32, 363, 452, 211, 135, 407, 451, 437, 380, 1, 54, 336, 22, 301, 205, 342, 335, 102, 323, 354, 376]
-	sbts .+= 1
-	calculate_mindist(sbts, g.weights)
-end
-
-# ╔═╡ 9c69c226-6919-40b8-919a-c219d83ae7c8
-maximum(values)
 
 # ╔═╡ f0232d89-8acf-4222-bcd4-b35d28e3d42b
 begin
@@ -81,37 +50,45 @@ begin
 	files = collect(filter(x -> x[end-3:end] == ".txt", files))
 end
 
+# ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
+number_of_runs = 30
+
 # ╔═╡ c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
 df = DataFrame(graphs = files, 
-	random=zeros(length(files)), 
-	greedy=zeros(length(files)),
+	mean=zeros(length(files)),
+	std=zeros(length(files)),
+	min=zeros(length(files)),
+	max=zeros(length(files)),
 	)
 
 # ╔═╡ 8bed605d-4cff-4647-ae9e-e52d38925b1c
-for (i,f) in enumerate(files)
-	g = loadgraph("mmdp_graphs/$(f)", WELFormat())
+for f in files
+	g = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
 	m_location = findfirst(x-> x == 'm', f)
 	dot_location = findfirst(x-> x == '.', f)
 	m = parse(Int64, f[m_location + 1:dot_location-1])
-	results = map(_ -> maxmindp_random(g, m), 1:1000)
+	results = map(_ -> maxmindp_genetic_dist(nv(g), g.weights, m, 1000, 100, 0.1, 0.8), 1:number_of_runs)
 	values = map(x -> calculate_mindist(g, x, g.weights), results)
-	df[i, "random"] = maximum(values)
-	
-	greedy2 = maxmindp_greedy_mindp(g, m)
-	df[i, "greedy"] = calculate_mindist(g, greedy2, g.weights)
+	df[i, "max"] = maximum(values)
+	df[i, "min"] = minimum(values)
+	df[i, "std"] = std(values)
+	df[i, "mean"] = mean(values)
 end
 
 # ╔═╡ a29138b1-741f-4248-9e92-41736ce57d00
 df
 
 # ╔═╡ a9b1c20b-4596-4b35-923d-38a6f7e31b30
-CSV.write("results.csv", df)
+if df[1,2] != 0
+	CSV.write("results_$(Dates.today()).csv", df)
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Folds = "41a02a25-b8f0-4f67-bc48-60067656b558"
 GraphIO = "aa1b3936-2fda-51b9-ab35-c553d3a640a2"
 GraphPlot = "a2cc645c-3eea-5389-862e-a155d0052231"
@@ -136,7 +113,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "5c1a8361f7e570ffc115f7120531a5dd7318fb0b"
+project_hash = "7654a0720319aa0eba1f7c0543d1fb49650e5756"
 
 [[deps.Accessors]]
 deps = ["Compat", "CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "LinearAlgebra", "MacroTools", "Requires", "Test"]
@@ -626,14 +603,8 @@ version = "5.1.1+0"
 # ╠═a1028eb0-5dd5-11ed-3893-69ea980733df
 # ╠═5296ebb5-46c2-4d0e-9437-d1ee0ebc7f25
 # ╠═77e37ef3-fd63-47b6-b2fb-040b3a22dd90
-# ╠═61a473d9-175e-43c7-85e5-9f558d40cef8
-# ╠═1f1fdf59-5ba0-44d9-afad-65e0abce6e52
-# ╠═40a4d5db-edb2-4667-af36-80edba8e9ad4
-# ╠═f026cad9-6708-440c-a2f7-30418b2de881
-# ╠═82116829-f886-4fa8-9aeb-15044b769759
-# ╠═c8687b1f-97d9-4d20-a9f0-552303470c16
-# ╠═9c69c226-6919-40b8-919a-c219d83ae7c8
 # ╠═f0232d89-8acf-4222-bcd4-b35d28e3d42b
+# ╠═f60fb029-fd50-4746-80d4-e7a0241b8334
 # ╠═c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
 # ╠═8bed605d-4cff-4647-ae9e-e52d38925b1c
 # ╠═a29138b1-741f-4248-9e92-41736ce57d00

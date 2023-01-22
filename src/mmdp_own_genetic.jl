@@ -40,32 +40,10 @@ end
 
 function maxmindp_genetic_dist(n, min_dists, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate)
 	people = [maxmindp_random(n, k) for i in 1:numberOfPeople]
-	max_val = 0
-	max_vec = zeros(k)
-	for i in 1:numberOfIterations
-		people = collect(map(x -> rand() < mutationRate ? mutate(n, x) : x, people))
-		
-		scores = map(x -> calculate_mindist(x, min_dists), people)
-		score_sorted = sortperm(scores)
-
-		if scores[score_sorted[1]] > max_val
-			max_val = scores[score_sorted[1]]
-			max_vec = copy(people[score_sorted[1]])
-		end
-
-		halfOfPeople = Int32(floor(numberOfPeople/2))
-		people = collect(map(x->people[x], score_sorted[end-halfOfPeople+1:end]))
-
-		for j in halfOfPeople+1:numberOfPeople
-			push!(people, crossover(people[rand(1:halfOfPeople)],  people[rand(1:halfOfPeople)]))
-		end
-	end
-
-	max_vec, max_val
+	maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate, people)
 end
 
-function maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate, starterPosition)
-	people = [starterPosition for _ in 1:numberOfPeople]
+function maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate, people)
 	max_val = calculate_mindist(people[1], min_dists)
 	max_vec = people[1]
 	for i in 1:numberOfIterations
