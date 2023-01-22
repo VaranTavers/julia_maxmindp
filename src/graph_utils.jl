@@ -47,3 +47,10 @@ function subgraph(g, labels)
 
     g_res
 end
+
+function calculate_mindist(vertices, min_distances)
+	
+	dist_sums = map(i -> map(j -> min_distances[i, j], vertices), vertices)
+
+	minimum(map(sum,dist_sums))
+end

@@ -4,13 +4,7 @@ begin
 	using Statistics
 end
 
-function calculate_mindist(vertices, min_distances)
-	
-	dist_sums = map(i -> map(j -> min_distances[i, j], vertices), vertices)
-
-	minimum(map(sum,dist_sums))
-end
-
+include("graph_utils.jl")
 
 # ╔═╡ 465d25c0-1b13-41f6-9a7a-8ee419092d83
 function vector_with(v, x)
