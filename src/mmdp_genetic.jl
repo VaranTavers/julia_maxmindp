@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.16
 
 using Markdown
 using InteractiveUtils
@@ -18,11 +18,29 @@ begin
 	using Random
 end
 
-# ╔═╡ 61a473d9-175e-43c7-85e5-9f558d40cef8
-g = loadgraph("mmdp_graphs/01Type1_52.1_n500m200.lgz", SWGFormat())
+# ╔═╡ 6ef43d18-6b61-416b-9aa8-1b439df6e555
+function ingredients(path::String)
+	# this is from the Julia source code (evalfile in base/loading.jl)
+	# but with the modification that it returns the module instead of the last object
+	name = Symbol(basename(path))
+	m = Module(name)
+	Core.eval(m,
+        Expr(:toplevel,
+             :(eval(x) = $(Expr(:core, :eval))($name, x)),
+             :(include(x) = $(Expr(:top, :include))($name, x)),
+             :(include(mapexpr::Function, x) = $(Expr(:top, :include))(mapexpr, $name, x)),
+             :(include($path))))
+	m
+end
 
-# ╔═╡ 1f1fdf59-5ba0-44d9-afad-65e0abce6e52
-min_dists = g.weights #calculate_all_min_distances(g)
+# ╔═╡ 35181c6e-ade1-4c26-95f3-c642706cfe0f
+begin
+	g_utils_jl = ingredients("graph_utils.jl")
+	import .g_utils_jl: WELFormat, loadgraph, loadgraphs
+end
+
+# ╔═╡ 61a473d9-175e-43c7-85e5-9f558d40cef8
+g = Graphs.loadgraph("mmdp_graphs/01Type1_52.1_n500m200.dat", WELFormat()::Graphs.AbstractGraphFormat)
 
 # ╔═╡ 01c7dcaa-cefb-42b1-aa8a-4b3e98995aee
 function calculate_mindist(g, vertices, min_distances)
@@ -31,6 +49,9 @@ function calculate_mindist(g, vertices, min_distances)
 
 	minimum(map(sum,dist_sums))
 end
+
+# ╔═╡ 1f1fdf59-5ba0-44d9-afad-65e0abce6e52
+min_dists = g.weights #calculate_all_min_distances(g)
 
 # ╔═╡ 23197168-7590-4ef6-8531-d60b98d04292
 function maxmindp_random(g, k)
@@ -66,9 +87,6 @@ function crossover(v1, v2)
 	collect(shuffle(v3))[1:length(v1)]
 end
 
-# ╔═╡ 77e9e571-d728-41f6-a63f-ae159645b281
-sortperm([2,3,1])
-
 # ╔═╡ 85d312a8-7e9e-4b03-922c-a7f9f6489a80
 function maxmindp_genetic_dist(g, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate)
 	people = [maxmindp_random(g, k) for i in 1:numberOfPeople]
@@ -99,35 +117,35 @@ end
 # ╔═╡ f075bd05-8dde-481d-8b0f-1d57eed6c20e
 maxmindp_genetic_dist(g, 200, 1000, 100, 0.1, 0.2)
 
-# ╔═╡ 2b67893c-8dc0-49ea-917b-6604f82258fe
-function read_edge_list_weighted(filename)
-	csv = CSV.read(filename, DataFrame; header=false, delim=" ")
-	labels = unique(sort(vcat(csv[:, 1], csv[:, 2])))
-	n = length(labels)
-	g = SimpleWeightedGraph(n)
-	for row in eachrow(csv)
-		if length(row) < 3
-			@show "bad row"
-			@show row
-			continue
-		end
-		weight = row[3]
-		if weight == 0
-			weight = 0.000001
-		end
-		if findfirst(x -> x == row[2], labels) == nothing
-			@show labels
-			@show row
-		end
-		point_a = findfirst(x -> x == row[1], labels)
-		point_b = findfirst(x -> x == row[2], labels)
+# ╔═╡ 46169a1c-619b-4fd7-a693-83687e1cd683
+function maxmindp_genetic_dist2(g, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate)
+	people = [[324,495,51,435,462,45,10,399,392,164,441,449,168,94,300,452,121,15,408,297,178,366,384,319,234,238,272,205,2,239,376,377,117,456,438,83,34,427,407,413,42,418,144,247,352,22,340,266,159,241,98,55,212,235,23,420,469,333,119,265,213,357,230,500,110,170,19,334,267,282,349,292,223,113,364,136,156,419,264,355,153,345,99,273,402,208,316,451,155,172,206,270,197,243,287,72,475,343,398,339,430,477,37,487,224,321,299,303,465,228,279,57,450,350,351,44,337,409,114,122,76,81,58,381,61,486,120,423,302,464,103,403,330,338,362,274,30,269,305,461,327,105,405,165,16,245,49,485,12,209,293,240,322,190,218,379,87,433,138,106,360,24,226,108,383,97,193,484,7,459,143,222,210,67,479,400,389,348,454,411,480,414,124,261,406,463,162,237,66,291,369,440,281,387,157,53,90,192,473,375] for _ in 1:numberOfPeople]
+	max_val = calculate_mindist(g, people[1], weights(g))
+	max_vec = people[1]
+	for i in 1:numberOfIterations
+		people = collect(map(x -> rand() < mutationRate ? mutate(g, x) : x, people))
 		
-		add_edge!(g, point_a, point_b, row[3])
-		add_edge!(g, point_b, point_a, row[3])
+		scores = map(x -> calculate_mindist(g, x, weights(g)), people)
+		score_sorted = sortperm(scores)
+
+		if scores[score_sorted[1]] > max_val
+			max_val = scores[score_sorted[1]]
+			max_vec = copy(people[score_sorted[1]])
+		end
+
+		halfOfPeople = Int32(floor(numberOfPeople/2))
+		people = collect(map(x->people[x], score_sorted[end-halfOfPeople+1:end]))
+
+		for j in halfOfPeople+1:numberOfPeople
+			push!(people, crossover(people[rand(1:halfOfPeople)],  people[rand(1:halfOfPeople)]))
+		end
 	end
 
-	g, labels
+	max_vec, max_val
 end
+
+# ╔═╡ b96ccddb-9dff-4c2a-8582-7c7acad4eb7b
+maxmindp_genetic_dist2(g, 200, 1000, 100, 0.1, 0.2)
 
 # ╔═╡ f0232d89-8acf-4222-bcd4-b35d28e3d42b
 begin
@@ -183,7 +201,7 @@ SimpleWeightedGraphs = "~1.2.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.2"
+julia_version = "1.8.3"
 manifest_format = "2.0"
 project_hash = "5c1a8361f7e570ffc115f7120531a5dd7318fb0b"
 
@@ -673,17 +691,19 @@ version = "5.1.1+0"
 
 # ╔═╡ Cell order:
 # ╠═a1028eb0-5dd5-11ed-3893-69ea980733df
+# ╠═6ef43d18-6b61-416b-9aa8-1b439df6e555
+# ╠═35181c6e-ade1-4c26-95f3-c642706cfe0f
 # ╠═61a473d9-175e-43c7-85e5-9f558d40cef8
-# ╠═1f1fdf59-5ba0-44d9-afad-65e0abce6e52
 # ╠═01c7dcaa-cefb-42b1-aa8a-4b3e98995aee
+# ╠═1f1fdf59-5ba0-44d9-afad-65e0abce6e52
 # ╠═23197168-7590-4ef6-8531-d60b98d04292
 # ╠═eb5e43e9-6306-428a-b69c-4880fcffcc41
 # ╠═9d4dd891-f165-435a-bcac-fc7f5654447a
 # ╠═a925abac-4188-412b-b384-b4909e0995a0
-# ╠═77e9e571-d728-41f6-a63f-ae159645b281
 # ╠═85d312a8-7e9e-4b03-922c-a7f9f6489a80
 # ╠═f075bd05-8dde-481d-8b0f-1d57eed6c20e
-# ╠═2b67893c-8dc0-49ea-917b-6604f82258fe
+# ╠═46169a1c-619b-4fd7-a693-83687e1cd683
+# ╠═b96ccddb-9dff-4c2a-8582-7c7acad4eb7b
 # ╠═f0232d89-8acf-4222-bcd4-b35d28e3d42b
 # ╠═c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
 # ╠═8bed605d-4cff-4647-ae9e-e52d38925b1c
