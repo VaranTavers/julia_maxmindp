@@ -54,7 +54,10 @@ begin
 end
 
 # ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
-number_of_runs = 30
+begin
+	number_of_runs = 30
+	f = ""
+end
 
 # ╔═╡ c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
 df = DataFrame(graphs = files, 
@@ -65,7 +68,7 @@ df = DataFrame(graphs = files,
 	)
 
 # ╔═╡ 8bed605d-4cff-4647-ae9e-e52d38925b1c
-for (i, f) in enumerate(files)
+begin
 	g = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
 	m_location = findfirst(x-> x == 'm', f)
 	dot_location = findlast(x-> x == '.', f)
@@ -82,10 +85,6 @@ end
 # ╔═╡ a29138b1-741f-4248-9e92-41736ce57d00
 df
 
-# ╔═╡ a9b1c20b-4596-4b35-923d-38a6f7e31b30
-if df[1,2] != 0
-	CSV.write("results_$(Dates.today()).csv", df)
-end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -816,6 +815,5 @@ version = "17.4.0+0"
 # ╠═c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
 # ╠═8bed605d-4cff-4647-ae9e-e52d38925b1c
 # ╠═a29138b1-741f-4248-9e92-41736ce57d00
-# ╠═a9b1c20b-4596-4b35-923d-38a6f7e31b30
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

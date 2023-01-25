@@ -65,5 +65,5 @@ function maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, numberOfPeo
 		end
 	end
 
-	max_vec, max_val
+	max_vec
 end
