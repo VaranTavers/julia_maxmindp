@@ -26,4 +26,5 @@ Manifest.toml
 * backup*.jl
 
 /src/mmdp_graphs
-/src/*.csv
+**.csv
+**.ods
