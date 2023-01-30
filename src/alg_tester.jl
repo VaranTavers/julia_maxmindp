@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.16
+# v0.19.20
 
 using Markdown
 using InteractiveUtils
@@ -37,12 +37,12 @@ end
 
 # ╔═╡ 77e37ef3-fd63-47b6-b2fb-040b3a22dd90
 begin
-	g_utils_jl = ingredients("graph_utils.jl")
+	g_utils_jl = ingredients("graph_utils.jl") 
 	import .g_utils_jl: WELFormat, loadgraph, loadgraphs, read_edge_list_weighted, calculate_mindist
-	greedy_jl = ingredients("mmdp_greedy.jl")
+	greedy_jl = ingredients("mmdp_greedy.jl") 
 	import .greedy_jl: maxmindp_greedy_mindp
 	own_genetic_jl = ingredients("mmdp_own_genetic.jl")
-	import .own_genetic_jl: maxmindp_genetic_dist, maxmindp_genetic_dist2
+	import .own_genetic_jl: maxmindp_genetic_dist, maxmindp_genetic_dist2, maxmindp_genetic_dist3
 	evolutionary_jl = ingredients("mmdp_evolutionary.jl")
 	import .evolutionary_jl: mmdp_evolutionary, mmdp_evolutionary2 
 end
@@ -51,10 +51,17 @@ end
 begin
 	files = readdir("./mmdp_graphs")
 	files = collect(filter(x -> x[end-3:end] == ".dat", files))
+	files = files[1:2]
 end
 
 # ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
-number_of_runs = 30
+begin
+	number_of_runs = 5
+	greedy = false
+	evolutionary = false
+	memetic = true
+	own_gen = true
+end
 
 # ╔═╡ c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
 df = DataFrame(graphs = files, 
@@ -62,7 +69,13 @@ df = DataFrame(graphs = files,
 	std=zeros(length(files)),
 	min=zeros(length(files)),
 	max=zeros(length(files)),
+	greedy=zeros(length(files)),
 	)
+
+# ╔═╡ 2ebfb4a0-34b8-4faa-bffb-2ac8ed0a1968
+function Evolutionary.trace!(record::Dict{String,Any}, objfun, state, population, method::CMAES, options)
+    record["pop"] = population
+end
 
 # ╔═╡ 8bed605d-4cff-4647-ae9e-e52d38925b1c
 for (i, f) in enumerate(files)
@@ -70,22 +83,49 @@ for (i, f) in enumerate(files)
 	m_location = findfirst(x-> x == 'm', f)
 	dot_location = findlast(x-> x == '.', f)
 	m = parse(Int64, f[m_location + 1:dot_location-1])
-	greedy = maxmindp_greedy_mindp(nv(g), m, g.weights)
-	results = Folds.map(_ -> mmdp_evolutionary2(nv(g), m, g.weights, greedy), 1:number_of_runs)
-	values = Folds.map(x -> calculate_mindist(x.minimizer[1:m], g.weights), results)
+	greedy_result = zeros(1:m)
+	if greedy || memetic
+		greedy_result = maxmindp_greedy_mindp(nv(g), m, g.weights)
+		df[i, "greedy"] = calculate_mindist(greedy_result, g.weights)
+	end
+	if evolutionary && memetic
+		results = Folds.map(_ -> mmdp_evolutionary2(nv(g), m, g.weights, greedy_result), 1:number_of_runs)
+		@show Evolutionary.trace(results[1])
+	elseif evolutionary
+		results = Folds.map(_ -> mmdp_evolutionary(nv(g), m, g.weights), 1:number_of_runs)
+	elseif own_gen && memetic
+		people = [i < 11 ? copy(greedy_result) : randperm(nv(g))[1:m] for i in 1:50]
+		results = map(_ -> maxmindp_genetic_dist3(nv(g), g.weights, m, 200, length(people) * 2, 0.1, 0.7, people), 1:number_of_runs)
+	elseif own_gen
+		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), g.weights, m, 100, 100, 0.1, 0.7), 1:number_of_runs)
+	end
+	values = [0.0, 0.0, 0.0, 0.0]
+	if evolutionary
+		values = Folds.map(x -> calculate_mindist(x.minimizer[1:m], g.weights), results)
+	elseif own_gen
+		values = Folds.map(x -> calculate_mindist(x, g.weights), results)
+		@show values
+	end
 	df[i, "max"] = maximum(values)
 	df[i, "min"] = minimum(values)
 	df[i, "std"] = std(values)
 	df[i, "mean"] = mean(values)
+	df[i, "greedy"] = calculate_mindist(greedy_result, g.weights)
 end
 
 # ╔═╡ a29138b1-741f-4248-9e92-41736ce57d00
 df
 
 # ╔═╡ a9b1c20b-4596-4b35-923d-38a6f7e31b30
-if df[1,2] != 0
+if df[1,6] != 0 || df[1,2] != 0
 	CSV.write("results_$(Dates.today()).csv", df)
 end
+
+# ╔═╡ 3942cd06-5377-414e-9c20-efb8531e21ff
+a = sort([80, 411, 131, 354, 366, 130, 259, 209, 143, 413, 156, 427, 356, 165, 239, 90, 92, 214, 137, 291, 283, 61, 407, 227, 240, 163, 369, 79, 169, 484, 400, 447, 84, 83, 264, 274, 26, 293, 56, 305, 9, 315, 414, 159, 403, 303, 28, 351, 459, 247, 360, 6, 441, 114, 162, 242, 51, 232, 334, 44, 479, 321, 433, 464, 30, 379, 168, 490, 387, 85, 443, 133, 449, 66, 422, 190, 395, 171, 424, 160, 110, 236, 267, 15, 72, 352, 412, 250, 491, 335, 222, 340, 428, 39, 367, 482, 106, 394, 376, 270, 111, 101, 316, 299, 255, 42, 276, 486, 390, 409, 489, 140, 330, 37, 207, 477, 418, 117, 300, 16, 348, 243, 235, 266, 113, 238, 421, 493, 35, 224, 53, 423, 465, 435, 265, 273, 120, 345, 362, 476, 281, 286, 221, 292, 319, 48, 426, 350, 157, 108, 297, 213, 178, 375, 197, 24, 466, 280, 480, 488, 434, 338, 481, 420, 97, 440, 363, 155, 398, 461, 99, 38, 269, 233, 333, 469, 152, 201, 223, 33, 364, 453, 212, 136, 408, 452, 438, 381, 2, 55, 337, 23, 302, 206, 343, 336, 103, 324, 355, 377])
+
+# ╔═╡ e613153c-cff4-44dc-8c59-77a8e241c9ee
+sbts[findlast(a .!== sbts)]
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -119,7 +159,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "e95aad340f829bfd0257f247c5d2c7bcd5f80092"
+project_hash = "7c9f23876c24438dfcb17d4d8aa71ab85dbe0807"
 
 [[deps.Accessors]]
 deps = ["Compat", "CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "LinearAlgebra", "MacroTools", "Requires", "Test"]
@@ -814,8 +854,11 @@ version = "17.4.0+0"
 # ╠═f0232d89-8acf-4222-bcd4-b35d28e3d42b
 # ╠═f60fb029-fd50-4746-80d4-e7a0241b8334
 # ╠═c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
+# ╠═2ebfb4a0-34b8-4faa-bffb-2ac8ed0a1968
 # ╠═8bed605d-4cff-4647-ae9e-e52d38925b1c
 # ╠═a29138b1-741f-4248-9e92-41736ce57d00
 # ╠═a9b1c20b-4596-4b35-923d-38a6f7e31b30
+# ╠═3942cd06-5377-414e-9c20-efb8531e21ff
+# ╠═e613153c-cff4-44dc-8c59-77a8e241c9ee
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

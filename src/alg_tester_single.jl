@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.16
+# v0.19.20
 
 using Markdown
 using InteractiveUtils
@@ -56,35 +56,52 @@ end
 # ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
 begin
 	number_of_runs = 30
-	f = ""
+	f = "SOM-b_08_n200_m80.dat"
 end
 
 # ╔═╡ c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
-df = DataFrame(graphs = files, 
-	mean=zeros(length(files)),
-	std=zeros(length(files)),
-	min=zeros(length(files)),
-	max=zeros(length(files)),
+df = DataFrame(graphs = [f], 
+	mean=zeros(1),
+	std=zeros(1),
+	min=zeros(1),
+	max=zeros(1),
+	greedy=zeros(1),
 	)
 
 # ╔═╡ 8bed605d-4cff-4647-ae9e-e52d38925b1c
 begin
 	g = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
+
+	g2 = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
 	m_location = findfirst(x-> x == 'm', f)
 	dot_location = findlast(x-> x == '.', f)
 	m = parse(Int64, f[m_location + 1:dot_location-1])
 	greedy = maxmindp_greedy_mindp(nv(g), m, g.weights)
 	results = Folds.map(_ -> mmdp_evolutionary2(nv(g), m, g.weights, greedy), 1:number_of_runs)
 	values = Folds.map(x -> calculate_mindist(x.minimizer[1:m], g.weights), results)
-	df[i, "max"] = maximum(values)
-	df[i, "min"] = minimum(values)
-	df[i, "std"] = std(values)
-	df[i, "mean"] = mean(values)
+	df[1, "max"] = maximum(values)
+	df[1, "min"] = minimum(values)
+	df[1, "std"] = std(values)
+	df[1, "mean"] = mean(values)
+	df[1, "greedy"] = calculate_mindist(greedy, g.weights)
+	df
 end
 
-# ╔═╡ a29138b1-741f-4248-9e92-41736ce57d00
+# ╔═╡ 61949fc2-2807-409e-8eb5-d7cd095c554a
+begin
+	results[1].iterations
+	calculate_mindist(greedy, g2.weights)
+
+end
+
+# ╔═╡ dc52a604-20cc-45fc-ab98-b081365d8fa8
 df
 
+# ╔═╡ 605c2e51-cd32-423e-b881-fc7bdf960208
+greedy
+
+# ╔═╡ dd1bd95c-1516-4320-9230-3dc118a738ae
+length(unique(sort(greedy)))
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -118,7 +135,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "e95aad340f829bfd0257f247c5d2c7bcd5f80092"
+project_hash = "7c9f23876c24438dfcb17d4d8aa71ab85dbe0807"
 
 [[deps.Accessors]]
 deps = ["Compat", "CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "LinearAlgebra", "MacroTools", "Requires", "Test"]
@@ -814,6 +831,9 @@ version = "17.4.0+0"
 # ╠═f60fb029-fd50-4746-80d4-e7a0241b8334
 # ╠═c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
 # ╠═8bed605d-4cff-4647-ae9e-e52d38925b1c
-# ╠═a29138b1-741f-4248-9e92-41736ce57d00
+# ╠═61949fc2-2807-409e-8eb5-d7cd095c554a
+# ╠═dc52a604-20cc-45fc-ab98-b081365d8fa8
+# ╠═605c2e51-cd32-423e-b881-fc7bdf960208
+# ╠═dd1bd95c-1516-4320-9230-3dc118a738ae
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

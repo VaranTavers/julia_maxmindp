@@ -31,6 +31,7 @@ function mutate(n, v)
 	v
 end
 
+
 function crossover(v1, v2)
 	v3 = copy(v1)
 	append!(v3, v2)
@@ -38,32 +39,83 @@ function crossover(v1, v2)
 	collect(shuffle(v3))[1:length(v1)]
 end
 
-function maxmindp_genetic_dist(n, min_dists, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate)
-	people = [maxmindp_random(n, k) for i in 1:numberOfPeople]
-	maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate, people)
+function maxmindp_genetic_dist(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate)
+	people = [maxmindp_random(n, k) for i in 1:populationSize]
+	maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people)
 end
 
-function maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, numberOfPeople, mutationRate, crossoverRate, people)
+function maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people)
 	max_val = calculate_mindist(people[1], min_dists)
 	max_vec = people[1]
 	for i in 1:numberOfIterations
 		people = collect(map(x -> rand() < mutationRate ? mutate(n, x) : x, people))
 		
 		scores = map(x -> calculate_mindist(x, min_dists), people)
-		score_sorted = sortperm(scores)
+		score_sorted = sortperm(scores, rev=true)
 
 		if scores[score_sorted[1]] > max_val
 			max_val = scores[score_sorted[1]]
 			max_vec = copy(people[score_sorted[1]])
 		end
 
-		halfOfPeople = Int32(floor(numberOfPeople/2))
-		people = collect(map(x->people[x], score_sorted[end-halfOfPeople+1:end]))
+		halfOfPeople = Int32(floor(populationSize/2))
+		people = collect(map(x->people[x], score_sorted[1:halfOfPeople]))
 
-		for j in halfOfPeople+1:numberOfPeople
+		for j in halfOfPeople+1:populationSize
 			push!(people, crossover(people[rand(1:halfOfPeople)],  people[rand(1:halfOfPeople)]))
 		end
 	end
 
 	max_vec
+end
+
+function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people)
+	max_val = calculate_mindist(people[1], min_dists)
+	max_vec = copy(people[1])
+	start = copy(people[1])
+	for i in 1:numberOfIterations
+		for j in length(people):populationSize
+			push!(people, crossover(people[rand(1:length(people))],  people[rand(1:length(people))]))
+		end
+		# @show people
+		scores = collect(map(x -> calculate_mindist(x, min_dists), people))
+		#@show scores
+		score_sorted = sortperm(scores, rev=true)
+
+		if scores[score_sorted[1]] > max_val
+			max_val = copy(scores[score_sorted[1]])
+			max_vec = copy(people[score_sorted[1]])
+		end
+
+		# @show max_val, calculate_mindist(max_vec, min_dists), max_vec
+
+		people = collect(map(x -> rand() < mutationRate ? mutationFromSBTS(n, x, min_dists) : x, people))
+
+		halfOfPeople = Int32(floor(populationSize*(1 - crossoverRate)))
+		people = collect(map(x->people[x], score_sorted[1:halfOfPeople]))
+		push!(people, start)
+	end
+
+	max_vec
+end
+
+function calculate_sumdp(new_point, v, min_dists)
+	sum(map(x -> min_dists[x, new_point], v))
+end
+
+function get_candidates(n, v)
+	a = collect(1:n)
+	
+	collect(setdiff(Set(a), Set(v)))
+end
+
+function mutationFromSBTS(n, v, min_dists)
+	changeId = rand(1:length(v))
+
+	candidates = get_candidates(n, v)
+	scores = collect(map(x -> calculate_sumdp(x, v, min_dists), candidates))
+
+	v[changeId] = candidates[argmax(scores)]
+
+	v
 end

@@ -34,5 +34,5 @@ function mmdp_evolutionary2(n, k, min_dists, start)
 	Evolutionary.optimize(
 		x -> f(x, k, min_dists), rest_of_things(start, n),
 		GA(populationSize = 100, selection = roulette,
-			 crossover = OX2, mutation = swap2, metrics=[]), Evolutionary.Options(iterations=100, show_trace=true))
+			 crossover = OX2, mutation = swap2, metrics=[]), Evolutionary.Options(iterations=100, store_trace=true))
 end
