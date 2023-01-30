@@ -110,12 +110,11 @@ function get_candidates(n, v)
 end
 
 function mutationFromSBTS(n, v, min_dists)
-	changeId = rand(1:length(v))
-
 	candidates = get_candidates(n, v)
-	scores = collect(map(x -> calculate_sumdp(x, v, min_dists), candidates))
+	scores_new = collect(map(x -> calculate_sumdp(x, v, min_dists), candidates))
+	scores_old = collect(map(x -> calculate_sumdp(x, v, min_dists), v))
 
-	v[changeId] = candidates[argmax(scores)]
+	v[argmin(scores_old)] = candidates[argmax(scores_new)]
 
 	v
 end
