@@ -37,7 +37,7 @@ end
 
 # ╔═╡ 77e37ef3-fd63-47b6-b2fb-040b3a22dd90
 begin
-	g_utils_jl = ingredients("graph_utils.jl")  
+	g_utils_jl = ingredients("graph_utils.jl") 
 	import .g_utils_jl: WELFormat, loadgraph, loadgraphs, read_edge_list_weighted, calculate_mindist
 	greedy_jl = ingredients("mmdp_greedy.jl") 
 	import .greedy_jl: maxmindp_greedy_mindp
@@ -56,7 +56,7 @@ end
 
 # ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
 begin
-	number_of_runs = 30
+	number_of_runs = 5
 	greedy = false
 	evolutionary = false
 	memetic = true
@@ -94,10 +94,10 @@ for (i, f) in enumerate(files)
 	elseif evolutionary
 		results = Folds.map(_ -> mmdp_evolutionary(nv(g), m, g.weights), 1:number_of_runs)
 	elseif own_gen && memetic
-		people = [i < 11 ? copy(greedy_result) : randperm(nv(g))[1:m] for i in 1:50]
-		results = map(_ -> maxmindp_genetic_dist3(nv(g), g.weights, m, 200, length(people) * 2, 0.1, 0.7, people), 1:number_of_runs)
+		people = [i < 3 ? copy(greedy_result) : randperm(nv(g))[1:m] for i in 1:50]
+		results = Folds.map(_ -> maxmindp_genetic_dist3(nv(g), g.weights, m, 200, length(people) * 2, 0.3, 0.7, deepcopy(people)), 1:number_of_runs)
 	elseif own_gen
-		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), g.weights, m, 100, 100, 0.1, 0.7), 1:number_of_runs)
+		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), g.weights, m, 1000, 100, 0.1, 0.7), 1:number_of_runs)
 	end
 	values = [0.0, 0.0, 0.0, 0.0]
 	if evolutionary
@@ -110,7 +110,9 @@ for (i, f) in enumerate(files)
 	df[i, "min"] = minimum(values)
 	df[i, "std"] = std(values)
 	df[i, "mean"] = mean(values)
-	df[i, "greedy"] = calculate_mindist(greedy_result, g.weights)
+	if df[i,6] != 0 || df[i,2] != 0
+	CSV.write("results_$(Dates.today()).csv", df)
+	end
 end
 
 # ╔═╡ a29138b1-741f-4248-9e92-41736ce57d00

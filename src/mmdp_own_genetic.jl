@@ -69,13 +69,18 @@ function maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, populationS
 	max_vec
 end
 
+sample(weights) = findfirst(cumsum(weights) .> rand())
+
 function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people)
 	max_val = calculate_mindist(people[1], min_dists)
 	max_vec = copy(people[1])
 	start = copy(people[1])
+	probs = ones(length(people)) ./ length(people)
 	for i in 1:numberOfIterations
 		for j in length(people):populationSize
-			push!(people, crossover(people[rand(1:length(people))],  people[rand(1:length(people))]))
+		#	 push!(people, crossover(people[rand(1:length(people))],  people[rand(1:length(people))]))
+			
+			push!(people, crossover(people[sample(probs)],  people[sample(probs)]))
 		end
 		# @show people
 		scores = collect(map(x -> calculate_mindist(x, min_dists), people))
@@ -89,10 +94,15 @@ function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationS
 
 		# @show max_val, calculate_mindist(max_vec, min_dists), max_vec
 
-		people = collect(map(x -> rand() < mutationRate ? mutationFromSBTS(n, x, min_dists) : x, people))
+		people = collect(map(x -> rand() < mutationRate ? mutationFromSBTSRand(n, x, min_dists) : x, people))
 
 		halfOfPeople = Int32(floor(populationSize*(1 - crossoverRate)))
 		people = collect(map(x->people[x], score_sorted[1:halfOfPeople]))
+		probs = copy(scores[score_sorted])[1:halfOfPeople]
+		@show probs
+		probs ./= sum(probs)
+		@show probs
+		@show cumsum(probs)
 		push!(people, start)
 	end
 
@@ -115,6 +125,18 @@ function mutationFromSBTS(n, v, min_dists)
 	scores_old = collect(map(x -> calculate_sumdp(x, v, min_dists), v))
 
 	v[argmin(scores_old)] = candidates[argmax(scores_new)]
+
+	v
+end
+
+function mutationFromSBTSRand(n, v, min_dists)
+	r = 12
+	candidates = get_candidates(n, v)
+	scores_new = collect(map(x -> calculate_sumdp(x, v, min_dists), candidates))
+	scores_old = collect(map(x -> calculate_sumdp(x, v, min_dists), v))
+	new_sorted = sortperm(scores_new, rev=true)
+	old_sorted = sortperm(scores_old)
+	v[rand(old_sorted[1:r])] = candidates[rand(new_sorted[1:r])]
 
 	v
 end
