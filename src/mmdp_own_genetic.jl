@@ -91,18 +91,16 @@ function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationS
 			max_val = copy(scores[score_sorted[1]])
 			max_vec = copy(people[score_sorted[1]])
 		end
-
 		# @show max_val, calculate_mindist(max_vec, min_dists), max_vec
 
-		people = collect(map(x -> rand() < mutationRate ? mutationFromSBTSRand(n, x, min_dists) : x, people))
-
+		people = collect(map(x -> rand() < mutationRate ? mutationFromSBTS(n, x, min_dists) : x, people))
 		halfOfPeople = Int32(floor(populationSize*(1 - crossoverRate)))
 		people = collect(map(x->people[x], score_sorted[1:halfOfPeople]))
 		probs = copy(scores[score_sorted])[1:halfOfPeople]
-		@show probs
-		probs ./= sum(probs)
-		@show probs
-		@show cumsum(probs)
+		s = sum(probs)
+		probs = collect(map(x->x/s, probs))
+		#@show probs
+		#@show cumsum(probs)
 		push!(people, start)
 	end
 
