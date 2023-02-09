@@ -39,9 +39,9 @@ function crossover(v1, v2)
 	collect(shuffle(v3))[1:length(v1)]
 end
 
-function maxmindp_genetic_dist(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate)
+function maxmindp_genetic_dist(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate; trace = false)
 	people = [maxmindp_random(n, k) for i in 1:populationSize]
-	maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people)
+	maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people, trace=trace)
 end
 
 function maxmindp_genetic_dist2(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people)
@@ -71,7 +71,7 @@ end
 
 sample(weights) = findfirst(cumsum(weights) .> rand())
 
-function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people)
+function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationSize, mutationRate, crossoverRate, people; trace = false)
 	max_val = calculate_mindist(people[1], min_dists)
 	max_vec = copy(people[1])
 	start = copy(people[1])
@@ -102,6 +102,11 @@ function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationS
 		#@show probs
 		#@show cumsum(probs)
 		push!(people, start)
+
+		if trace
+			@show max_val
+			@show max_vec
+		end
 	end
 
 	max_vec
