@@ -104,8 +104,7 @@ function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationS
 		push!(people, start)
 
 		if trace
-			@show max_val
-			@show max_vec
+			@show max_val, i, sort(max_vec)
 		end
 	end
 

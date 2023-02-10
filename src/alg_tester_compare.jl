@@ -58,10 +58,10 @@ end
 
 # ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
 begin
-	number_of_runs = 1
+	number_of_runs = 3
 	greedy = false
 	evolutionary = false
-	memetic = true
+	memetic = false
 	own_gen = true
 
 	trace = true
@@ -69,8 +69,8 @@ end
 
 # ╔═╡ ec823423-0597-4b3f-b87f-d0ca328d7b38
 function get_measure(g)
-	wcn(g, α=1)
-	#simrank_u(g, 100, 0.9)
+	#wcn(g, α=0)
+	simrank_w(g, 100, 0.9)
 	#vecs = [dijkstra_shortest_paths(g, i).dists for i in 1:nv(g)]
 	#mapreduce(permutedims, vcat, vecs)
 	#deepcopy(g.weights)
@@ -102,7 +102,7 @@ for (i, f) in enumerate(files)
 	m_location = findfirst(x-> x == 'm', f)
 	dot_location = findlast(x-> x == '.', f)
 	#m = parse(Int64, f[m_location + 1:dot_location-1])
-	m = Int(round(nv(g) * 0.1))
+	m = Int(round(nv(g) * 0.3))
 	#m = 3
 	greedy_result = zeros(1:m)
 	dist_measure = get_measure(g)

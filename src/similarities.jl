@@ -123,8 +123,8 @@ function resource_allocation_index(g)
 	[inner_sum(x->x, neighbors_list, i, j) for i in 1:n, j in 1:n]
 end
 
-function strength(neighbors, weights, i)
-	sum([weights[i, j] for j in neighbors[i]])
+function strength(neighbors, weights, i, α)
+	sum([weights[i, j]^α for j in neighbors[i]])
 end
 
 function wcn_inner_sum(neighbors, i, j, weights, α)
@@ -135,17 +135,17 @@ end
 
 function waa_inner_sum(neighbors, i, j, weights, α)
 	sum(
-		[(weights[i, x]^α + weights[x, j]^α) / log(1 + strength(neighbors, weights, x)) for x in intersect(neighbors[i], neighbors[j])]
+		[(weights[i, x]^α + weights[x, j]^α) / log(1 + strength(neighbors, weights, x, α)) for x in intersect(neighbors[i], neighbors[j])]
 	)
 end
 
 function wra_inner_sum(neighbors, i, j, weights, α)
 	sum(
-		[(weights[i, x]^α + weights[x, j]^α) / strength(neighbors, weights, x) for x in intersect(neighbors[i], neighbors[j])]
+		[(weights[i, x]^α + weights[x, j]^α) / strength(neighbors, weights, x, α) for x in intersect(neighbors[i], neighbors[j])]
 	)
 end
 
-function wcn(g, α=1)
+function wcn(g; α=1)
 	n = nv(g)
 	neighbors_list = [Set(neighbors(g, i)) for i in 1:n]
 
@@ -154,7 +154,7 @@ function wcn(g, α=1)
 	[wcn_inner_sum(neighbors_list, i, j, weights, α) for i in 1:n, j in 1:n]
 end
 
-function waa(g, α=1)
+function waa(g; α=1)
 	n = nv(g)
 	neighbors_list = [Set(neighbors(g, i)) for i in 1:n]
 
@@ -163,7 +163,7 @@ function waa(g, α=1)
 	[waa_inner_sum(neighbors_list, i, j, weights, α) for i in 1:n, j in 1:n]
 end
 
-function wra(g, α=1)
+function wra(g; α=1)
 	n = nv(g)
 	neighbors_list = [Set(neighbors(g, i)) for i in 1:n]
 
