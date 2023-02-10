@@ -63,14 +63,17 @@ begin
 	evolutionary = false
 	memetic = true
 	own_gen = true
+
+	trace = true
 end
 
 # ╔═╡ ec823423-0597-4b3f-b87f-d0ca328d7b38
 function get_measure(g)
-	#simrank_w(g, 100, 0.9)
+	wcn(g, α=1)
+	#simrank_u(g, 100, 0.9)
 	#vecs = [dijkstra_shortest_paths(g, i).dists for i in 1:nv(g)]
 	#mapreduce(permutedims, vcat, vecs)
-	deepcopy(g.weights)
+	#deepcopy(g.weights)
 end
 
 # ╔═╡ cf03999b-cb32-48f7-9c16-7158dc834869
@@ -89,7 +92,7 @@ end
 begin
 	pm = 0.2
 	pc = 0.7
-	n_i = 1000
+	n_i = 5000
 	pop = 100
 end
 
@@ -99,8 +102,8 @@ for (i, f) in enumerate(files)
 	m_location = findfirst(x-> x == 'm', f)
 	dot_location = findlast(x-> x == '.', f)
 	#m = parse(Int64, f[m_location + 1:dot_location-1])
-	#m = Int(round(nv(g) * 0.03))
-	m = 3
+	m = Int(round(nv(g) * 0.1))
+	#m = 3
 	greedy_result = zeros(1:m)
 	dist_measure = get_measure(g)
 	# @show dist_measure
@@ -111,9 +114,9 @@ for (i, f) in enumerate(files)
 		greedy_result = maxmindp_greedy_mindp(nv(g), m, dist_measure)
 		df[i, "greedy"] = calculate_mindist(greedy_result, dist_measure)
 		people = [i < 3 ? copy(greedy_result) : randperm(nv(g))[1:m] for i in 1:Int(pop / 2)]
-		results = Folds.map(_ -> maxmindp_genetic_dist3(nv(g), dist_measure, m, n_i, length(people) * 2, pm, pc, deepcopy(people), trace=true), 1:number_of_runs)
+		results = Folds.map(_ -> maxmindp_genetic_dist3(nv(g), dist_measure, m, n_i, length(people) * 2, pm, pc, deepcopy(people), trace=trace), 1:number_of_runs)
 	elseif own_gen
-		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), dist_measure, m, n_i, pop, pm, pc, trace=true), 1:number_of_runs)
+		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), dist_measure, m, n_i, pop, pm, pc, trace=trace), 1:number_of_runs)
 	end
 
 	result_mat = mapreduce(permutedims, vcat, results)
