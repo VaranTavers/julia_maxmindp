@@ -53,35 +53,47 @@ end
 begin
 	files = readdir("./mmdp_graphs")
 	files = collect(filter(x -> x[end-3:end] == ".dat", files))
+	#files = [files[41]]
 end
 
 # ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
 begin
-	number_of_runs = 10
+	number_of_runs = 3
 	greedy = false
 	evolutionary = false
-	memetic = true
+	memetic = false
 	own_gen = true
+
+	trace = true
 end
 
 # ╔═╡ ec823423-0597-4b3f-b87f-d0ca328d7b38
 function get_measure(g)
-	deepcopy(g.weights)
-	#simrank_w(g, 100, 0.9)
+	#wcn(g, α=0)
+	simrank_w(g, 100, 0.9)
+	#vecs = [dijkstra_shortest_paths(g, i).dists for i in 1:nv(g)]
+	#mapreduce(permutedims, vcat, vecs)
+	#deepcopy(g.weights)
 end
 
-# ╔═╡ c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
-df = DataFrame(graphs = files, 
-	mean=zeros(length(files)),
-	std=zeros(length(files)),
-	min=zeros(length(files)),
-	max=zeros(length(files)),
-	greedy=zeros(length(files)),
-	)
+# ╔═╡ cf03999b-cb32-48f7-9c16-7158dc834869
+begin
+	df = DataFrame(zeros((length(files), number_of_runs)), :auto)
+	insertcols!(df, 1, :graphs => files)
+	insertcols!(df, number_of_runs + 2, :mean => zeros(length(files)))
+	insertcols!(df, number_of_runs + 3, :std => zeros(length(files)))
+	insertcols!(df, number_of_runs + 4, :min => zeros(length(files)))
+	insertcols!(df, number_of_runs + 5, :max => zeros(length(files)))
+	insertcols!(df, number_of_runs + 6, :greedy => zeros(length(files)))
+	df
+end
 
-# ╔═╡ 2ebfb4a0-34b8-4faa-bffb-2ac8ed0a1968
-function Evolutionary.trace!(record::Dict{String,Any}, objfun, state, population, method::CMAES, options)
-    record["pop"] = population
+# ╔═╡ 6ceec89a-f4e2-4537-9443-efe5cdf8860b
+begin
+	pm = 0.2
+	pc = 0.7
+	n_i = 5000
+	pop = 100
 end
 
 # ╔═╡ 8bed605d-4cff-4647-ae9e-e52d38925b1c
@@ -89,47 +101,41 @@ for (i, f) in enumerate(files)
 	g = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
 	m_location = findfirst(x-> x == 'm', f)
 	dot_location = findlast(x-> x == '.', f)
-	m = parse(Int64, f[m_location + 1:dot_location-1])
+	#m = parse(Int64, f[m_location + 1:dot_location-1])
+	m = Int(round(nv(g) * 0.3))
+	#m = 3
 	greedy_result = zeros(1:m)
 	dist_measure = get_measure(g)
-	if greedy || memetic
+	# @show dist_measure
+	greedy_result = maxmindp_greedy_mindp(nv(g), m, dist_measure)
+	df[i, "greedy"] = calculate_mindist(greedy_result, dist_measure)
+	
+	if memetic
 		greedy_result = maxmindp_greedy_mindp(nv(g), m, dist_measure)
 		df[i, "greedy"] = calculate_mindist(greedy_result, dist_measure)
-	end
-	if evolutionary && memetic
-		results = Folds.map(_ -> mmdp_evolutionary2(nv(g), m, dist_measure, greedy_result), 1:number_of_runs)
-		@show Evolutionary.trace(results[1])
-	elseif evolutionary
-		results = Folds.map(_ -> mmdp_evolutionary(nv(g), m, dist_measure), 1:number_of_runs)
-	elseif own_gen && memetic
-		people = [i < 3 ? copy(greedy_result) : randperm(nv(g))[1:m] for i in 1:25]
-		results = Folds.map(_ -> maxmindp_genetic_dist3(nv(g), dist_measure, m, 200, length(people) * 2, 0.1, 0.7, deepcopy(people)), 1:number_of_runs)
+		people = [i < 3 ? copy(greedy_result) : randperm(nv(g))[1:m] for i in 1:Int(pop / 2)]
+		results = Folds.map(_ -> maxmindp_genetic_dist3(nv(g), dist_measure, m, n_i, length(people) * 2, pm, pc, deepcopy(people), trace=trace), 1:number_of_runs)
 	elseif own_gen
-		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), dist_measure, m, 1000, 50, 0.1, 0.7), 1:number_of_runs)
+		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), dist_measure, m, n_i, pop, pm, pc, trace=trace), 1:number_of_runs)
 	end
-	values = [0.0, 0.0, 0.0, 0.0]
-	if evolutionary
-		values = Folds.map(x -> calculate_mindist(x.minimizer[1:m], dist_measure), results)
-	elseif own_gen
-		values = Folds.map(x -> calculate_mindist(x, dist_measure), results)
-		@show values
-	end
+
+	result_mat = mapreduce(permutedims, vcat, results)
+	CSV.write("run_results/run_result_$(f)_$(Dates.today()).csv", DataFrame(result_mat, :auto))
+	
+	values = Folds.map(x -> calculate_mindist(x, dist_measure), results)
+	df[i, 2:(number_of_runs+1)] = values
+	
 	df[i, "max"] = maximum(values)
 	df[i, "min"] = minimum(values)
 	df[i, "std"] = std(values)
 	df[i, "mean"] = mean(values)
 	if df[i,6] != 0 || df[i,2] != 0
-	CSV.write("results_$(Dates.today()).csv", df)
+	CSV.write("results_$(Dates.today()).csv", df; delim='\t', decimal=',')
 	end
 end
 
 # ╔═╡ a29138b1-741f-4248-9e92-41736ce57d00
 df
-
-# ╔═╡ a9b1c20b-4596-4b35-923d-38a6f7e31b30
-if df[1,6] != 0 || df[1,2] != 0
-	CSV.write("results_$(Dates.today()).csv", df)
-end
 
 # ╔═╡ 3942cd06-5377-414e-9c20-efb8531e21ff
 a = sort([80, 411, 131, 354, 366, 130, 259, 209, 143, 413, 156, 427, 356, 165, 239, 90, 92, 214, 137, 291, 283, 61, 407, 227, 240, 163, 369, 79, 169, 484, 400, 447, 84, 83, 264, 274, 26, 293, 56, 305, 9, 315, 414, 159, 403, 303, 28, 351, 459, 247, 360, 6, 441, 114, 162, 242, 51, 232, 334, 44, 479, 321, 433, 464, 30, 379, 168, 490, 387, 85, 443, 133, 449, 66, 422, 190, 395, 171, 424, 160, 110, 236, 267, 15, 72, 352, 412, 250, 491, 335, 222, 340, 428, 39, 367, 482, 106, 394, 376, 270, 111, 101, 316, 299, 255, 42, 276, 486, 390, 409, 489, 140, 330, 37, 207, 477, 418, 117, 300, 16, 348, 243, 235, 266, 113, 238, 421, 493, 35, 224, 53, 423, 465, 435, 265, 273, 120, 345, 362, 476, 281, 286, 221, 292, 319, 48, 426, 350, 157, 108, 297, 213, 178, 375, 197, 24, 466, 280, 480, 488, 434, 338, 481, 420, 97, 440, 363, 155, 398, 461, 99, 38, 269, 233, 333, 469, 152, 201, 223, 33, 364, 453, 212, 136, 408, 452, 438, 381, 2, 55, 337, 23, 302, 206, 343, 336, 103, 324, 355, 377])
@@ -865,11 +871,10 @@ version = "17.4.0+0"
 # ╠═f0232d89-8acf-4222-bcd4-b35d28e3d42b
 # ╠═f60fb029-fd50-4746-80d4-e7a0241b8334
 # ╠═ec823423-0597-4b3f-b87f-d0ca328d7b38
-# ╠═c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
-# ╠═2ebfb4a0-34b8-4faa-bffb-2ac8ed0a1968
+# ╟─cf03999b-cb32-48f7-9c16-7158dc834869
+# ╠═6ceec89a-f4e2-4537-9443-efe5cdf8860b
 # ╠═8bed605d-4cff-4647-ae9e-e52d38925b1c
 # ╠═a29138b1-741f-4248-9e92-41736ce57d00
-# ╠═a9b1c20b-4596-4b35-923d-38a6f7e31b30
 # ╠═3942cd06-5377-414e-9c20-efb8531e21ff
 # ╠═e613153c-cff4-44dc-8c59-77a8e241c9ee
 # ╟─00000000-0000-0000-0000-000000000001
