@@ -93,7 +93,7 @@ function maxmindp_genetic_dist3(n, min_dists, k, numberOfIterations, populationS
 		end
 		# @show max_val, calculate_mindist(max_vec, min_dists), max_vec
 
-		people = collect(map(x -> rand() < mutationRate ? mutationFromSBTS(n, x, min_dists) : x, people))
+		people = collect(map(x -> rand() < mutationRate ? mutationFromSBTSRoulette(n, x, min_dists) : x, people))
 		halfOfPeople = Int32(floor(populationSize*(1 - crossoverRate)))
 		people = collect(map(x->people[x], score_sorted[1:halfOfPeople]))
 		probs = copy(scores[score_sorted])[1:halfOfPeople]
@@ -135,6 +135,20 @@ function mutationFromSBTSRand(n, v, min_dists)
 	new_sorted = sortperm(scores_new, rev=true)
 	old_sorted = sortperm(scores_old)
 	v[rand(old_sorted[1:r])] = candidates[rand(new_sorted[1:r])]
+
+	v
+end
+
+function mutationFromSBTSRoulette(n, v, min_dists)
+	r = 12
+	candidates = get_candidates(n, v)
+	scores_new = collect(map(x -> calculate_sumdp(x, v, min_dists), candidates))
+	scores_old = collect(map(x -> calculate_sumdp(x, v, min_dists), v))
+	new_sorted = sortperm(scores_new, rev=true)
+	old_sorted = sortperm(scores_old)
+	s_new_sorted = copy(new_sorted[1:r]) ./ sum(new_sorted[1:r])
+	s_old_sorted = copy(new_sorted[1:r]) ./ sum(new_sorted[1:r])
+	v[sample(s_old_sorted[1:r])] = candidates[sample(s_new_sorted[1:r])]
 
 	v
 end
