@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.20
 
 using Markdown
 using InteractiveUtils
@@ -70,10 +70,10 @@ end
 # ╔═╡ ec823423-0597-4b3f-b87f-d0ca328d7b38
 function get_measure(g)
 	#wcn(g, α=0)
-	simrank_w(g, 100, 0.9)
+	#simrank_w(g, 100, 0.9)
 	#vecs = [dijkstra_shortest_paths(g, i).dists for i in 1:nv(g)]
 	#mapreduce(permutedims, vcat, vecs)
-	#deepcopy(g.weights)
+	deepcopy(g.weights)
 end
 
 # ╔═╡ cf03999b-cb32-48f7-9c16-7158dc834869
@@ -92,7 +92,7 @@ end
 begin
 	pm = 0.2
 	pc = 0.7
-	n_i = 5000
+	n_i = 1000
 	pop = 100
 end
 
@@ -101,8 +101,8 @@ for (i, f) in enumerate(files)
 	g = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
 	m_location = findfirst(x-> x == 'm', f)
 	dot_location = findlast(x-> x == '.', f)
-	#m = parse(Int64, f[m_location + 1:dot_location-1])
-	m = Int(round(nv(g) * 0.3))
+	m = parse(Int64, f[m_location + 1:dot_location-1])
+	#m = Int(round(nv(g) * 0.3))
 	#m = 3
 	greedy_result = zeros(1:m)
 	dist_measure = get_measure(g)
@@ -173,7 +173,7 @@ SimpleWeightedGraphs = "~1.2.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.2"
+julia_version = "1.8.5"
 manifest_format = "2.0"
 project_hash = "7c9f23876c24438dfcb17d4d8aa71ab85dbe0807"
 
@@ -278,7 +278,7 @@ version = "4.5.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "0.5.2+0"
+version = "1.0.1+0"
 
 [[deps.Compose]]
 deps = ["Base64", "Colors", "DataStructures", "Dates", "IterTools", "JSON", "LinearAlgebra", "Measures", "Printf", "Random", "Requires", "Statistics", "UUIDs"]
