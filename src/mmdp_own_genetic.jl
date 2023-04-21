@@ -156,3 +156,98 @@ function mutationFromSBTSRoulette(n, v, min_dists)
 
 	v
 end
+
+struct GeneticSettings
+	populationSize
+	mutationRate
+	crossoverRate
+	elitRate
+end
+
+struct RunSettings
+	minDists
+	k
+	numberOfIterations
+end
+
+function crossoverRoulette(chromosomes, fitness)
+	rouletteWheel = fitness ./ sum(fitness)
+
+	crossover(
+		chromosomes[sample(rouletteWheel)],
+		chromosomes[sample(rouletteWheel)]
+	)
+end
+
+'''
+
+'''
+function maxmindp_genetic_dist4(runS::RunSettings, gaS::GeneticSettings, chromosomes; trace = false)
+	# Initializing values and functions for later use
+	n, _ = size(runS.minDists)
+	calcFitness(x) = calculate_mindist(x, runS.minDists)
+	runMutation(x) = rand() < gaS.mutationRate ? mutationFromSBTS(n, x, runS.minDists) : x
+	chromosomes = deepcopy(chromosomes)
+	
+	# Initializing global maximum as one of the given chromosome
+	maxVal = calculate_mindist(chromosomes[1], runS.minDists)
+	maxVec = copy(chromosomes[1])
+
+	fitness = collect(
+		map(calcFitness, chromosomes)
+	)
+	for i in 1:runS.numberOfIterations
+		# Creating p_c% new individuals with the crossover
+		# operator, choosing parents based on fitness.
+		newChromosomes = [
+			crossoverRoulette(chromosomes, fitness)
+			for _ in 1:Int(ceil(n * gaS.crossoverRate))
+		]
+		newFitness = collect(
+			map(calcFitness, chromosomes)
+		)
+		
+		# Add them to the chromosome pool
+		append!(chromosomes, newChromosomes)
+		append!(fitness, newFitness)
+
+		# Mutating individuals
+		chromosomes = collect(
+			map(runMutation, chromosomes)
+		)
+
+		# Recalculating fitness for new individuals
+		fitness = collect(
+			map(calcFitness, chromosomes)
+		)
+
+		# Sorting fitness scores
+		fitnessSorted = sortperm(fitness, rev=true)
+
+		# Choosing the elit
+		elitNumber = Int(ceil(gaS.populationSize * gaS.elitRate))
+		elitChromosomes = deepcopy(chromosomes[fitnessSorted[1:elitNumber]])
+		elitFitness = copy(fitness[fitnessSorted[1:elitNumber]])
+
+		# Choosing the rest randomly from the others
+		restNumber = gaS.populationSize - elitNumber
+		restIds = [
+			rand(fitnessSorted[elitNumber+1:end])
+			for _ in 1:restNumber
+		]
+		restChromosomes = map(x -> copy(chromosomes[x]), restIds)
+		restFitness = map(x -> fitness[x], restIds)
+
+		chromosomes = vcat(elitChromosomes, restChromosomes)
+		fitness = vcat(elitFitness, restFitness)
+
+		maxVec = copy(chromosomes[1])
+		maxVal = fitness[1]
+
+		if trace
+			@show maxVal, i, sort(maxVec)
+		end
+	end
+
+	maxVec
+end
