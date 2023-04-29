@@ -188,7 +188,7 @@ function maxmindp_genetic_dist4(runS::RunSettings, gaS::GeneticSettings, chromos
 	calcFitness(x) = calculate_mindist(x, runS.minDists)
 	runMutation(x) = rand() < gaS.mutationRate ? mutationFromSBTS(n, x, runS.minDists) : x
 	chromosomes = deepcopy(chromosomes)
-	
+
 	# Initializing global maximum as one of the given chromosome
 	maxVal = calculate_mindist(chromosomes[1], runS.minDists)
 	maxVec = copy(chromosomes[1])

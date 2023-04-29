@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.14
+# v0.19.20
 
 using Markdown
 using InteractiveUtils
@@ -45,29 +45,22 @@ begin
 	import .own_genetic_jl: maxmindp_genetic_dist, maxmindp_genetic_dist2, maxmindp_genetic_dist3
 	evolutionary_jl = ingredients("mmdp_evolutionary.jl")
 	import .evolutionary_jl: mmdp_evolutionary, mmdp_evolutionary2 
-	simrank_jl = ingredients("similarities.jl") 
-	import .simrank_jl: simrank_u, simrank_w, adamic_adar_u, resource_allocation_index, wcn, wra, waa
 end
 
 # ╔═╡ f0232d89-8acf-4222-bcd4-b35d28e3d42b
 begin
 	files = readdir("./mmdp_graphs")
 	files = collect(filter(x -> x[end-3:end] == ".dat", files))
+	files = files[1:4]
 end
 
 # ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
 begin
-	number_of_runs = 10
+	number_of_runs = 5
 	greedy = false
 	evolutionary = false
 	memetic = true
 	own_gen = true
-end
-
-# ╔═╡ ec823423-0597-4b3f-b87f-d0ca328d7b38
-function get_measure(g)
-	deepcopy(g.weights)
-	#simrank_w(g, 100, 0.9)
 end
 
 # ╔═╡ c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
@@ -91,27 +84,26 @@ for (i, f) in enumerate(files)
 	dot_location = findlast(x-> x == '.', f)
 	m = parse(Int64, f[m_location + 1:dot_location-1])
 	greedy_result = zeros(1:m)
-	dist_measure = get_measure(g)
 	if greedy || memetic
-		greedy_result = maxmindp_greedy_mindp(nv(g), m, dist_measure)
-		df[i, "greedy"] = calculate_mindist(greedy_result, dist_measure)
+		greedy_result = maxmindp_greedy_mindp(nv(g), m, g.weights)
+		df[i, "greedy"] = calculate_mindist(greedy_result, g.weights)
 	end
 	if evolutionary && memetic
-		results = Folds.map(_ -> mmdp_evolutionary2(nv(g), m, dist_measure, greedy_result), 1:number_of_runs)
+		results = Folds.map(_ -> mmdp_evolutionary2(nv(g), m, g.weights, greedy_result), 1:number_of_runs)
 		@show Evolutionary.trace(results[1])
 	elseif evolutionary
-		results = Folds.map(_ -> mmdp_evolutionary(nv(g), m, dist_measure), 1:number_of_runs)
+		results = Folds.map(_ -> mmdp_evolutionary(nv(g), m, g.weights), 1:number_of_runs)
 	elseif own_gen && memetic
-		people = [i < 3 ? copy(greedy_result) : randperm(nv(g))[1:m] for i in 1:25]
-		results = Folds.map(_ -> maxmindp_genetic_dist3(nv(g), dist_measure, m, 200, length(people) * 2, 0.1, 0.7, deepcopy(people)), 1:number_of_runs)
+		people = [i < 3 ? copy(greedy_result) : randperm(nv(g))[1:m] for i in 1:50]
+		results = Folds.map(_ -> maxmindp_genetic_dist3(nv(g), g.weights, m, 200, length(people) * 2, 0.3, 0.7, deepcopy(people)), 1:number_of_runs)
 	elseif own_gen
-		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), dist_measure, m, 1000, 50, 0.1, 0.7), 1:number_of_runs)
+		results = Folds.map(_ -> maxmindp_genetic_dist(nv(g), g.weights, m, 1000, 100, 0.1, 0.7), 1:number_of_runs)
 	end
 	values = [0.0, 0.0, 0.0, 0.0]
 	if evolutionary
-		values = Folds.map(x -> calculate_mindist(x.minimizer[1:m], dist_measure), results)
+		values = Folds.map(x -> calculate_mindist(x.minimizer[1:m], g.weights), results)
 	elseif own_gen
-		values = Folds.map(x -> calculate_mindist(x, dist_measure), results)
+		values = Folds.map(x -> calculate_mindist(x, g.weights), results)
 		@show values
 	end
 	df[i, "max"] = maximum(values)
@@ -167,7 +159,7 @@ SimpleWeightedGraphs = "~1.2.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.2"
+julia_version = "1.8.5"
 manifest_format = "2.0"
 project_hash = "7c9f23876c24438dfcb17d4d8aa71ab85dbe0807"
 
@@ -272,7 +264,7 @@ version = "4.5.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "0.5.2+0"
+version = "1.0.1+0"
 
 [[deps.Compose]]
 deps = ["Base64", "Colors", "DataStructures", "Dates", "IterTools", "JSON", "LinearAlgebra", "Measures", "Printf", "Random", "Requires", "Statistics", "UUIDs"]
@@ -864,7 +856,6 @@ version = "17.4.0+0"
 # ╠═77e37ef3-fd63-47b6-b2fb-040b3a22dd90
 # ╠═f0232d89-8acf-4222-bcd4-b35d28e3d42b
 # ╠═f60fb029-fd50-4746-80d4-e7a0241b8334
-# ╠═ec823423-0597-4b3f-b87f-d0ca328d7b38
 # ╠═c3fd688d-63cf-4cd0-9c98-c4c6e1ce56c6
 # ╠═2ebfb4a0-34b8-4faa-bffb-2ac8ed0a1968
 # ╠═8bed605d-4cff-4647-ae9e-e52d38925b1c
