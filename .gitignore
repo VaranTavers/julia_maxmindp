@@ -29,4 +29,5 @@ Manifest.toml
 **.csv
 **.ods
 /src/run_results
+/src/old_results
 **/nohup.out
