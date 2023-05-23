@@ -20,10 +20,13 @@ begin
 	#files = files[1:4]
 end
 
+fst((x,_)) = x
+
 # ╔═╡ f60fb029-fd50-4746-80d4-e7a0241b8334
 begin
-	number_of_runs = 30
+	numberOfIterations = 30
 	memetic = false
+	logging = true
 	#                     n_p, mut, cro, elit
 	gaS = GeneticSettings(200, 0.1, 0.7, 0.5)
 	number_of_iterations = 200
@@ -55,11 +58,17 @@ for (i, f) in enumerate(files)
 		chromosomes = [randperm(nv(g))[1:m] for _ in 1:gaS.populationSize]
 	end
 
-	runS = RunSettings(g.weights, m, number_of_iterations)
-	results = Folds.map(_ -> maxmindp_genetic_dist4(runS, gaS, chromosomes), 1:number_of_runs)
+	runS = RunSettings(g.weights, m, number_of_iterations, logging)
+	results = Folds.map(_ -> maxmindp_genetic_dist4(runS, gaS, chromosomes), 1:numberOfIterations)
+	values = Folds.map(((x,y),) -> calculate_mindist(x, g.weights), results)
 	
-		values = Folds.map(x -> calculate_mindist(x, g.weights), results)
-	CSV.write("run_result_$(f)_$(Dates.today()).csv", DataFrame(results, :auto))
+	if logging
+		max_val = argmax(values)
+		_, logs = results[max_val]
+		CSV.write("logs_$(f)_$(max_val)_$(Dates.today()).csv", DataFrame(logs, :auto))
+	end
+
+	CSV.write("run_result_$(f)_$(Dates.today()).csv", DataFrame(fst.(results), :auto))
 	df[i, "max"] = maximum(values)
 	df[i, "min"] = minimum(values)
 	df[i, "std"] = std(values)

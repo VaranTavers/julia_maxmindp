@@ -168,6 +168,9 @@ struct RunSettings
 	minDists
 	k
 	numberOfIterations
+	logging
+	RunSettings(minDists, k, numberOfIterations) = new(minDists, k, numberOfIterations, "")
+	RunSettings(minDists, k, numberOfIterations, logging) = new(minDists, k, numberOfIterations, logging)
 end
 
 function crossoverRoulette(chromosomes, fitness)
@@ -182,7 +185,7 @@ end
 '''
 
 '''
-function maxmindp_genetic_dist4(runS::RunSettings, gaS::GeneticSettings, chromosomes; trace = false)
+function maxmindp_genetic_dist4(runS::RunSettings, gaS::GeneticSettings, chromosomes)
 	# Initializing values and functions for later use
 	n, _ = size(runS.minDists)
 	calcFitness(x) = calculate_mindist(x, runS.minDists)
@@ -192,6 +195,9 @@ function maxmindp_genetic_dist4(runS::RunSettings, gaS::GeneticSettings, chromos
 	# Initializing global maximum as one of the given chromosome
 	maxVal = calculate_mindist(chromosomes[1], runS.minDists)
 	maxVec = copy(chromosomes[1])
+
+	# Initializing logging
+	logs = []
 
 	fitness = collect(
 		map(calcFitness, chromosomes)
@@ -244,10 +250,12 @@ function maxmindp_genetic_dist4(runS::RunSettings, gaS::GeneticSettings, chromos
 		maxVec = copy(chromosomes[1])
 		maxVal = fitness[1]
 
-		if trace
-			@show maxVal, i, sort(maxVec)
+		if runS.logging != ""
+			logRow = [i, maxVal]
+			append!(logRow, sort(maxVec))
+			push!(logs, logRow)
 		end
 	end
 
-	maxVec
+	maxVec, logs
 end
