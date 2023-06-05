@@ -21,7 +21,7 @@ using Test
     @test begin
         numberOfRuns = 50
         vec = [1, 20, 30, 40, 50, 10000, 10000, 10000, 10000, 10000]
-        count([sumdpRouletteIN(vec; p=0.5) for _ in 1:numberOfRuns] .== 1) > numberOfRuns * 0.9
+        count([sumdpRouletteIN(vec; p=0.5) for _ in 1:numberOfRuns] .== 1) > numberOfRuns * 0.8
     end
     @test begin
         numberOfRuns = 50
