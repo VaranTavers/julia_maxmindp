@@ -9,7 +9,7 @@ function maxmindp_random(n, k, min_dists)
 end
 
 function maxmindp_bo_random(n, k, min_dists, m)
-	runs = [maxmindp_random(n, k) fo, _ in 1:m]
+	runs = [maxmindp_random(n, k, min_dists) fo, _ in 1:m]
 	results = map(x -> calculate_mindist(x, min_dists), runs)
 
 	runs[argmax(results)]

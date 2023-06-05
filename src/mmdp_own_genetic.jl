@@ -13,7 +13,7 @@ function maxmindp_random(n, k)
 end
 
 function has_duplicates(v, newPointId)
-	for i in 1:length(v)
+	for i in eachindex()
 		if i != newPointId && v[i] == v[newPointId]
 			return true
 		end
