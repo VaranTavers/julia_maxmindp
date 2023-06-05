@@ -25,12 +25,124 @@ end
 fst((x, _)) = x
 
 
-numberOfRuns = 30
+numberOfRuns = 2
 
 configurations = [
-  # conf_name,                        n_p, mut, cro, elit, mutationAlg, crossoverAlg,       meme,  log,  iter 
-  ("baseline_ga_200", GeneticSettings(200, 0.1, 0.7, 0.5, mutationSBTS, crossoverRoulette), false, true, 200)
-  ("baseline_memetic_200", GeneticSettings(200, 0.1, 0.7, 0.5, mutationSBTS, crossoverRoulette), true, true, 200)
+  # conf_name,                        n_p, mut, cro, elit, crossoverAlg, mutationAlg,       meme,  log,  iter 
+  # Baselines
+  ("baseline_ga_200",
+    GeneticSettings(
+      200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      mutationSBTS
+    ),
+    false, true, 200),
+  ("baseline_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      mutationSBTS,
+    ),
+    true, true, 200),
+  # GA variations 50%
+  ("roulette50in_ga_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN)
+    ),
+    false, true, 200),
+  ("roulette50out_ga_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT),
+    ),
+    false, true, 200),
+  ("random50in_ga_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN)
+    ),
+    false, true, 200),
+  ("random50out_ga_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT)
+    ),
+    false, true, 200),
+  # GA variations 25%
+  ("roulette25in_ga_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25))
+    ),
+    false, true, 200),
+  ("roulette25out_ga_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)),
+    ),
+    false, true, 200),
+  ("random25in_ga_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRandomIN(x, p=0.25))
+    ),
+    false, true, 200),
+  ("random25out_ga_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25))
+    ),
+    false, true, 200),
+  # Memetic variations (50%)
+  ("roulette50in_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN)
+    ),
+    true, true, 200),
+  ("roulette50out_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT),
+    ),
+    true, true, 200),
+  ("random50in_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN)
+    ),
+    true, true, 200),
+  ("random50out_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT)
+    ),
+    true, true, 200),
+  # Memetic variations 25%
+  ("roulette25in_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25))
+    ),
+    true, true, 200),
+  ("roulette25out_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)),
+    ),
+    true, true, 200),
+  ("random25in_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRandomIN(x, p=0.25))
+    ),
+    true, true, 200),
+  ("random25out_memetic_200",
+    GeneticSettings(200, 0.1, 0.7, 0.5,
+      crossoverRoulette,
+      (a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25))
+    ),
+    true, true, 200),
 ]
 
 df = DataFrame(graphs=files,
@@ -41,8 +153,21 @@ df = DataFrame(graphs=files,
   greedy=zeros(length(files)),
 )
 
+if !isdir("./logs")
+  mkdir("./logs")
+end
+if !isdir("./results")
+  mkdir("./results")
+end
+
 for (conf_name, gaS, memetic, logging, numberOfIterations) in configurations
   date_of_start = Dates.today()
+  if !isdir("logs/$(conf_name)_$(date_of_start)")
+    mkdir("logs/$(conf_name)_$(date_of_start)")
+  end
+  if !isdir("results/$(conf_name)_$(date_of_start)")
+    mkdir("results/$(conf_name)_$(date_of_start)")
+  end
   for (i, f) in enumerate(files)
     g = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
     m_location = findfirst(x -> x == 'm', f)
@@ -62,7 +187,7 @@ for (conf_name, gaS, memetic, logging, numberOfIterations) in configurations
     end
 
     runS = RunSettings(g.weights, m, numberOfIterations, logging)
-    results = Folds.map(_ -> maxmindp_genetic_dist4(runS, gaS, chromosomes), 1:numberOfRuns)
+    results = Folds.map(_ -> maxmindp_genetic(runS, gaS, chromosomes), 1:numberOfRuns)
     values = Folds.map(((x, y),) -> calculate_mindist(x, g.weights), results)
 
     if logging

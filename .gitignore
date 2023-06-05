@@ -31,3 +31,5 @@ Manifest.toml
 /src/run_results
 /src/old_results
 **/nohup.out
+/src/results
+/src/logs

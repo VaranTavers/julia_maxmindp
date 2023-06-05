@@ -23,9 +23,10 @@ end
 function sumdpRouletteIN(scores; p=1)
   r = Int32(ceil(length(scores) * p))
 
-  sorted = sortperm(chosen_scores)
+  sorted = sortperm(scores)
   chosen_scores = scores[sorted][1:r]
-  chosen_probs = chosen_scores ./ sum(chosen_scores)
+  chosen_probs = sum(chosen_scores) ./ chosen_scores
+  chosen_probs = chosen_probs ./ sum(chosen_probs)
 
   sorted[sample(chosen_probs)]
 end
@@ -33,7 +34,7 @@ end
 # Chooses randomly from bottom p% IN
 function sumdpRandomIN(scores; p=1)
   r = Int32(ceil(length(scores) * p))
-  sorted = sortperm(chosen_scores)
+  sorted = sortperm(scores)
 
   sorted[rand(1:r)]
 end
@@ -49,7 +50,7 @@ end
 function sumdpRouletteOUT(scores; p=1)
   r = Int32(ceil(length(scores) * p))
 
-  sorted = sortperm(chosen_scores, rev=true)
+  sorted = sortperm(scores, rev=true)
   chosen_scores = scores[sorted][1:r]
   chosen_probs = chosen_scores ./ sum(chosen_scores)
 
@@ -59,7 +60,7 @@ end
 # Chooses randomly from top p% of OUT
 function sumdpRandomOUT(scores; p=1)
   r = Int32(ceil(length(scores) * p))
-  sorted = sortperm(chosen_scores, rev=true)
+  sorted = sortperm(scores, rev=true)
 
   sorted[rand(1:r)]
 end
