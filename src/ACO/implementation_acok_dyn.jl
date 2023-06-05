@@ -79,7 +79,7 @@ function generate_s(inner::ACOKInner, vars::ACOKSettings)
 end
 
 function choose_iteration_best(inner::ACOKInner, settings::ACOKSettings, iterations)
-  iterations = filter(x -> x != nothing, iterations)
+  iterations = filter(x -> x !== nothing, iterations)
   points = Folds.map(x -> settings.eval_f(inner.graph, settings.compute_solution(inner.graph, x)), iterations)
   index = argmax(points)
   (iterations[index], points[index])

@@ -4,3 +4,12 @@ function crossoverNaive(v1, v2)
   v3 = unique(sort(v3))
   collect(shuffle(v3))[1:length(v1)]
 end
+
+function crossoverRoulette(chromosomes, fitness)
+  rouletteWheel = fitness ./ sum(fitness)
+
+  crossoverNaive(
+    chromosomes[sample(rouletteWheel)],
+    chromosomes[sample(rouletteWheel)]
+  )
+end
