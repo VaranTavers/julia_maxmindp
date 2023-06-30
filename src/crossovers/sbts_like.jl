@@ -4,8 +4,8 @@ end
 
 function SBTSLikeCrossoverOne(left, right, minDists)
 
-  scoresLeft = collect(map(x -> calculate_sumdp(x, v, minDists), left))
-  scoresRight = collect(map(x -> calculate_sumdp(x, v, minDists), right))
+  scoresLeft = collect(map(x -> calculate_sumdp(x, left, minDists), left))
+  scoresRight = collect(map(x -> calculate_sumdp(x, right, minDists), right))
   leftIdsSorted = sortperm(scoresLeft, rev=true)
   rightIdsSorted = sortperm(scoresRight, rev=true)
 
@@ -29,7 +29,7 @@ function SBTSLikeCrossoverOne(left, right, minDists)
   collect(newChromosome)
 end
 
-function crossoverSBTSLikeCrossover(chromosomes, fitness, minDists)
+function crossoverSBTSLike(chromosomes, fitness, minDists)
   rouletteWheel = fitness ./ sum(fitness)
 
   SBTSLikeCrossoverOne(
