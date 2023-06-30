@@ -5,7 +5,7 @@ function crossoverNaive(v1, v2)
   collect(shuffle(v3))[1:length(v1)]
 end
 
-function crossoverRoulette(chromosomes, fitness)
+function crossoverRoulette(chromosomes, fitness, _minDists)
   rouletteWheel = fitness ./ sum(fitness)
 
   crossoverNaive(

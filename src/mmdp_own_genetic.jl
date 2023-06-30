@@ -52,7 +52,7 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
     # Creating p_c% new individuals with the crossover
     # operator, choosing parents based on fitness.
     newChromosomes = [
-      gaS.crossoverAlg(chromosomes, fitness)
+      gaS.crossoverAlg(chromosomes, fitness, runS.minDists)
       for _ in 1:Int(ceil(n * gaS.crossoverRate))
     ]
     newFitness = collect(
