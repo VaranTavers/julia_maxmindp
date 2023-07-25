@@ -93,8 +93,10 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
     chromosomes = vcat(elitChromosomes, restChromosomes)
     fitness = vcat(elitFitness, restFitness)
 
-    maxVec = copy(chromosomes[1])
-    maxVal = fitness[1]
+    if fitness[1] > maxVal
+      maxVec = copy(chromosomes[1])
+      maxVal = fitness[1]
+    end
 
     if runS.logging != ""
       logRow = [i, maxVal]
