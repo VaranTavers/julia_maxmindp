@@ -28,123 +28,41 @@ fst((x, _)) = x
 
 numberOfRuns = 30
 
+param_tuning_n_p = [50, 100, 200]
+param_tuning_mut_rate = [0.1, 0.2]
+param_tuning_cro_rate = [0.7, 0.8]
+param_tuning_elit = [0.25, 0.5]
+param_tuning_nr_gen = [200, 500, 1000]
+param_tuning_mutation = [
+  (mutationSBTS, "Baseline"),
+  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in"),
+  #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
+  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN), "random50in"),
+  #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT), "random50out"),
+  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25)), "roulette25in"),
+  #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)), "roulette25out"),
+  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRandomIN(x, p=0.25)), "random25in"),
+  #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
+]
+param_tuning_memetic = [false, true]
+
 configurations = [
   # conf_name,                        n_p, mut, cro, elit, crossoverAlg, mutationAlg,       meme,  log,  iter 
   # Baselines
-  ("baseline_ga_200",
+  ("$(alg_name)_np$(n_p)_mut$(mut)_cro$(cro)_elit$(elit)_gen$(nr_gen)_mem$(memetic)",
     GeneticSettings(
-      200, 0.1, 0.7, 0.5,
+      n_p, mut, cro, elit,
       crossoverSBTSLike,
-      mutationSBTS
+      mut_alg
     ),
-    false, true, 200),
-  ("baseline_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      mutationSBTS,
-    ),
-    true, true, 200),
-  # GA variations 50%
-  ("roulette50in_ga_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN)
-    ),
-    false, true, 200),
-  ("roulette50out_ga_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT),
-    ),
-    false, true, 200),
-  ("random50in_ga_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN)
-    ),
-    false, true, 200),
-  ("random50out_ga_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT)
-    ),
-    false, true, 200),
-  # GA variations 25%
-  ("roulette25in_ga_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25))
-    ),
-    false, true, 200),
-  ("roulette25out_ga_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)),
-    ),
-    false, true, 200),
-  ("random25in_ga_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRandomIN(x, p=0.25))
-    ),
-    false, true, 200),
-  ("random25out_ga_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25))
-    ),
-    false, true, 200),
-  # Memetic variations (50%)
-  ("roulette50in_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN)
-    ),
-    true, true, 200),
-  ("roulette50out_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT),
-    ),
-    true, true, 200),
-  ("random50in_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN)
-    ),
-    true, true, 200),
-  ("random50out_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT)
-    ),
-    true, true, 200),
-  # Memetic variations 25%
-  ("roulette25in_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25))
-    ),
-    true, true, 200),
-  ("roulette25out_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)),
-    ),
-    true, true, 200),
-  ("random25in_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRandomIN(x, p=0.25))
-    ),
-    true, true, 200),
-  ("random25out_memetic_200",
-    GeneticSettings(200, 0.1, 0.7, 0.5,
-      crossoverSBTSLike,
-      (a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25))
-    ),
-    true, true, 200),
-]
+    memetic, true, nr_gen)
+  for n_p in param_tuning_n_p,
+  mut in param_tuning_mut_rate,
+  cro in param_tuning_cro_rate,
+  elit in param_tuning_elit,
+  (mut_alg, alg_name) in param_tuning_mutation,
+  nr_gen in param_tuning_nr_gen,
+  memetic in param_tuning_memetic]
 
 df = DataFrame(graphs=files,
   mean=zeros(length(files)),
