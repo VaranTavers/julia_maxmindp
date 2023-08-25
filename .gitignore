@@ -33,3 +33,4 @@ Manifest.toml
 **/nohup.out
 /src/results
 /src/logs
+/src/images
