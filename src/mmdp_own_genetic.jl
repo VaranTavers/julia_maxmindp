@@ -76,6 +76,10 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
     # Sorting fitness scores
     fitnessSorted = sortperm(fitness, rev=true)
 
+    fitnessMaxVal = deepcopy(fitness[fitnessSorted[1]])
+    fitnessMaxVec = deepcopy(chromosomes[fitnessSorted[1]])
+
+
     # Choosing the elit
     elitNumber = Int(ceil(gaS.populationSize * gaS.elitRate))
     elitChromosomes = deepcopy(chromosomes[fitnessSorted[1:elitNumber]])
@@ -93,9 +97,9 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
     chromosomes = vcat(elitChromosomes, restChromosomes)
     fitness = vcat(elitFitness, restFitness)
 
-    if fitness[1] > maxVal
-      maxVec = copy(chromosomes[1])
-      maxVal = fitness[1]
+    if fitnessMaxVal > maxVal
+      maxVec = deepcopy(fitnessMaxVec)
+      maxVal = deepcopy(fitnessMaxVal)
     end
 
     if runS.logging != ""

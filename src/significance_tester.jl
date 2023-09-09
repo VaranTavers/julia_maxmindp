@@ -56,16 +56,12 @@ for folder in folders
   end
 end
 
-@show pvalue(MannWhitneyUTest(
-  configs["Baseline_np100_mut0.1_cro0.7_elit0.25_gen200_memfalse_2023-07-26"]["01Type1a_52.1_n500m200.dat"],
-  configs["Baseline_np100_mut0.1_cro0.7_elit0.25_gen1000_memfalse_2023-08-01"]["01Type1a_52.1_n500m200.dat"]
-))
 
 point_sum = zeros(length(keys(configs)), length(keys(configs)))
 
 configs_keys = collect(keys(configs))
 
-
+#=
 for k1 in configs_keys
   k1_keys = collect(keys(configs[k1]))
   if !("02Type2.2_n500m50.dat" in k1_keys)
@@ -73,6 +69,7 @@ for k1 in configs_keys
     @show configs[k1]
   end
 end
+=#
 
 for g in keys(gs)
 
@@ -87,15 +84,28 @@ for g in keys(gs)
   global point_sum += conf_mat
   png(heatmap(conf_mat, rev=true, aspect_ratio=1), "images/$(g).png")
 
+  df = DataFrame(conf_mat, configs_keys)
+  df[!, "Config"] = configs_keys
+  CSV.write("images/$(g).csv", df)
+
+
 end
 
 point_sum
 png(heatmap(point_sum, rev=true, aspect_ratio=1), "images/sum.png")
+sum_df = DataFrame(point_sum, configs_keys)
+sum_df[!, "Config"] = configs_keys
 
 sum_of_rows = sum(point_sum, dims=2)
 best_version = argmax(sum_of_rows)[1]
 best_value = maximum(sum_of_rows)
-
 @show sum_of_rows
-@show point_sum
+sum_df[!, "Sum"] = sum_of_rows[:]
+
+CSV.write("images/sum.csv", sum_df)
+
+
+@show collect(enumerate(configs_keys))
+# @show sum_of_rows
+# @show point_sum
 @show best_version, best_value, configs_keys[best_version]
