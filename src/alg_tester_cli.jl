@@ -53,7 +53,7 @@ param_tuning_n_p = [200]
 param_tuning_mut_rate = [0.2]
 param_tuning_cro_rate = [0.8]
 param_tuning_elit = [0.5]
-param_tuning_nr_gen = [1000]
+param_tuning_nr_gen = [300]
 param_tuning_mutation = [
   #(mutationSBTS, "Baseline"),
   #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in"),
