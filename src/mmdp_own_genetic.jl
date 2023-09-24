@@ -55,9 +55,7 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
       gaS.crossoverAlg(chromosomes, fitness, runS.minDists)
       for _ in 1:Int(ceil(n * gaS.crossoverRate))
     ]
-    newFitness = collect(
-      map(calcFitness, chromosomes)
-    )
+    newFitness = zeros(length(newChromosomes))
 
     # Add them to the chromosome pool
     append!(chromosomes, newChromosomes)
