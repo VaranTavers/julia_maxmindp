@@ -86,7 +86,7 @@ function customMutationAlg(n, v, minDists, numOfMoves)
     i = 0
     j = 0
     while !good
-      i = sample(chosen_probs)
+      i = rand(1:length(v)) #sample(chosen_probs)
       j = rand(1:n)
       good = minDists[v[i], j] > 0 && findfirst(x -> x == j, v) === nothing
     end
