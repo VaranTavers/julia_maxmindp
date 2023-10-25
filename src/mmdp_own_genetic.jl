@@ -34,8 +34,9 @@ end
 function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
   # Initializing values and functions for later use
   n = length(chromosomes)
+  numberOfPoints, _ = size(runS.minDists)
   calcFitness(x) = calculate_mindist(x, runS.minDists)
-  runMutation(x) = rand() < gaS.mutationRate ? gaS.mutationAlg(n, x, runS.minDists) : x
+  runMutation(x) = rand() < gaS.mutationRate ? gaS.mutationAlg(numberOfPoints, x, runS.minDists) : x
   chromosomes = deepcopy(chromosomes)
 
   # Initializing global maximum as one of the given chromosome
