@@ -71,7 +71,7 @@ param_tuning_memetic = [false]
 configurations = [
   # conf_name,                        n_p, mut, cro, elit, crossoverAlg, mutationAlg,       meme,  log,  iter 
   # Baselines
-  ("$(alg_name)_np$(n_p)_mut$(mut)_cro$(cro)_elit$(elit)_gen$(nr_gen)_mem$(memetic)",
+  ("TREE_BIG_RUN_FIX$(alg_name)",
     GeneticSettings(
       n_p, mut, cro, elit,
       crossoverSBTSLike,

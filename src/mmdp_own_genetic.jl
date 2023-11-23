@@ -75,7 +75,7 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
     if maxNum > 2
       # @show "Tree :)"
       treeChromosomes = [
-        customMutationAlg(n, deepcopy(maxVec), runS.minDists, maxNum - 2)
+        customMutationAlg(numberOfPoints, deepcopy(maxVec), runS.minDists, maxNum - 2)
         for _ in 1:Int(ceil(n * gaS.crossoverRate))
       ]
 
