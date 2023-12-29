@@ -47,7 +47,7 @@ param_tuning_mutation = [
 param_tuning_memetic = [false, true]
 =#
 
-numberOfRuns = 30
+numberOfRuns = 50
 
 param_tuning_n_p = [200]
 param_tuning_mut_rate = [0.2]
@@ -56,13 +56,13 @@ param_tuning_elit = [0.5]
 param_tuning_nr_gen = [1000]
 param_tuning_mutation = [
   #(mutationSBTS, "Baseline"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in"),
+   ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in"),
   #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
   #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN), "random50in"),
   #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT), "random50out"),
   #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25)), "roulette25in"),
   #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)), "roulette25out"),
-  ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRandomIN(x, p=0.25)), "random25in"),
+  # ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRandomIN(x, p=0.25)), "random25in"),
   #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
 ]
 param_tuning_memetic = [false]
@@ -71,7 +71,7 @@ param_tuning_memetic = [false]
 configurations = [
   # conf_name,                        n_p, mut, cro, elit, crossoverAlg, mutationAlg,       meme,  log,  iter 
   # Baselines
-  ("$(alg_name)_np$(n_p)_mut$(mut)_cro$(cro)_elit$(elit)_gen$(nr_gen)_mem$(memetic)",
+  ("NEW_BASE_$(alg_name)",
     GeneticSettings(
       n_p, mut, cro, elit,
       crossoverSBTSLike,
