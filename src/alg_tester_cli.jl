@@ -8,11 +8,12 @@ begin
     using Statistics
     using Random
     using Dates
+    using WeightedEdgeListFormat
 end
 
-include("graph_utils.jl")
-include("mmdp_greedy.jl")
-include("mmdp_own_genetic.jl")
+include("utils/graph_utils.jl")
+include("algorithms/mmdp_greedy.jl")
+include("algorithms/mmdp_own_genetic.jl")
 include("mutations/sbts.jl")
 include("crossovers/naive.jl")
 include("crossovers/sbts_sane.jl")
@@ -26,25 +27,11 @@ end
 fst((x, _)) = x
 
 #=
-numberOfRuns = 30
-
 param_tuning_n_p = [50, 100, 200]
 param_tuning_mut_rate = [0.1, 0.2]
 param_tuning_cro_rate = [0.7, 0.8]
 param_tuning_elit = [0.25, 0.5]
 param_tuning_nr_gen = [200, 500, 1000]
-param_tuning_mutation = [
-  (mutationSBTS, "Baseline"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN), "random50in"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT), "random50out"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25)), "roulette25in"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)), "roulette25out"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRandomIN(x, p=0.25)), "random25in"),
-  #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
-]
-param_tuning_memetic = [false, true]
 =#
 
 numberOfRuns = 10
