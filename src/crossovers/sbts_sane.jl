@@ -16,7 +16,7 @@ function SBTSLikeCrossoverSane(left, right, minDists)
     collect(map(x -> center[x], centerIdsSorted[1:length(left)]))
 end
 
-function crossoverSBTSLike(chromosomes, fitness, minDists)
+function crossoverSBTSSane(chromosomes, fitness, minDists)
     rouletteWheel = fitness ./ sum(fitness)
 
     SBTSLikeCrossoverSane(

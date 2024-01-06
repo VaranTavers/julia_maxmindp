@@ -9,8 +9,7 @@ end
 include("../utils/graph_utils.jl")
 include("./genetic_common.jl")
 
-
-function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
+function maxmindp_genetic_tree(runS::RunSettings, gaS::GeneticSettings, chromosomes)
     # Initializing values and functions for later use
     n = length(chromosomes)
     numberOfPoints, _ = size(runS.minDists)
@@ -22,6 +21,7 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
     # Initializing global maximum as one of the given chromosome
     maxVal = calculate_mindist(chromosomes[1], runS.minDists)
     maxVec = copy(chromosomes[1])
+    maxNum = 0
 
     # Initializing logging
     logs = []
@@ -34,7 +34,8 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
             gaS.crossoverAlg(chromosomes, fitness, runS.minDists) for
             _ = 1:Int(ceil(n * gaS.crossoverRate))
         ]
-        newFitness = collect(map(calcFitness, chromosomes))
+        newFitness = zeros(length(newChromosomes))
+
 
         # Add them to the chromosome pool
         append!(chromosomes, newChromosomes)
@@ -42,6 +43,28 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
 
         # Mutating individuals
         chromosomes = collect(map(runMutation, chromosomes))
+
+        # If the tree grew big enough it begins producing its offspring
+        # that is in its neighborhood (the possible neighborhood grows as
+        # the tree grows)
+        if maxNum > 2
+            # @show "Tree :)"
+            treeChromosomes = [
+                customMutationAlg(
+                    numberOfPoints,
+                    deepcopy(maxVec),
+                    runS.minDists,
+                    maxNum - 2,
+                ) for _ = 1:Int(ceil(n * gaS.crossoverRate))
+            ]
+
+            treeFitness = zeros(length(treeChromosomes))
+
+            # Add them to the chromosome pool
+            append!(chromosomes, treeChromosomes)
+            append!(fitness, treeFitness)
+
+        end
 
         # Recalculating fitness for new individuals
         fitness = collect(map(calcFitness, chromosomes))
@@ -70,6 +93,9 @@ function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
         if fitnessMaxVal > maxVal
             maxVec = deepcopy(fitnessMaxVec)
             maxVal = deepcopy(fitnessMaxVal)
+            maxNum = 0
+        else
+            maxNum += 1
         end
 
         if runS.logging != ""

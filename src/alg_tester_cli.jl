@@ -14,6 +14,7 @@ end
 include("utils/graph_utils.jl")
 include("algorithms/mmdp_greedy.jl")
 include("algorithms/mmdp_own_genetic.jl")
+include("algorithms/mmdp_tree_genetic.jl")
 include("mutations/sbts.jl")
 include("crossovers/naive.jl")
 include("crossovers/sbts_sane.jl")
@@ -23,6 +24,8 @@ begin
     files = collect(filter(x -> x[end-3:end] == ".dat", files))
     #files = files[1:4]
 end
+
+println("Alg_tester_cli started on $(Dates.now())")
 
 fst((x, _)) = x
 
@@ -55,6 +58,9 @@ param_tuning_mutation = [
     ),
     #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
 ]
+
+param_tuning_genetic_alg = [("GA", maxmindp_genetic), ("GA+", maxmindp_genetic_tree)]
+param_tuning_crossover = [("Sane", crossoverSBTSSane)]
 param_tuning_memetic = [false]
 
 
@@ -62,24 +68,29 @@ configurations = [
     # conf_name,                        n_p, mut, cro, elit, crossoverAlg, mutationAlg,       meme,  log,  iter 
     # Baselines
     (
-        "NEWNEWX_$(alg_name)_np$(n_p)_mut$(mut)_cro$(cro)_elit$(elit)_gen$(nr_gen)_mem$(memetic)",
-        GeneticSettings(n_p, mut, cro, elit, crossoverSBTSLike, mut_alg),
+        "$(gen_alg_name)_$(crossover_name)_$(mut_op_name)",
+        GeneticSettings(n_p, mut, cro, elit, crossover_alg, mut_alg),
         memetic,
         true,
         nr_gen,
+        (gen_alg_name, gen_alg),
     ) for n_p in param_tuning_n_p, mut in param_tuning_mut_rate,
     cro in param_tuning_cro_rate, elit in param_tuning_elit,
-    (mut_alg, alg_name) in param_tuning_mutation, nr_gen in param_tuning_nr_gen,
-    memetic in param_tuning_memetic
+    (mut_alg, mut_op_name) in param_tuning_mutation, nr_gen in param_tuning_nr_gen,
+    memetic in param_tuning_memetic,
+    (gen_alg_name, gen_alg) in param_tuning_genetic_alg,
+    (crossover_name, crossover_alg) in param_tuning_crossover
 ]
+
+l_files = length(files)
 
 df = DataFrame(
     graphs = files,
-    mean = zeros(length(files)),
-    std = zeros(length(files)),
-    min = zeros(length(files)),
-    max = zeros(length(files)),
-    greedy = zeros(length(files)),
+    mean = zeros(l_files),
+    std = zeros(l_files),
+    min = zeros(l_files),
+    max = zeros(l_files),
+    greedy = zeros(l_files),
 )
 
 if !isdir("./logs")
@@ -89,7 +100,10 @@ if !isdir("./results")
     mkdir("./results")
 end
 
-for (conf_name, gaS, memetic, logging, numberOfIterations) in configurations
+for (conf_name, gaS, memetic, logging, numberOfIterations, (gen_alg_name, gen_alg)) in
+    configurations
+    println("$(conf_name) started on $(Dates.now())")
+
     date_of_start = Dates.today()
     if !isdir("logs/$(conf_name)_$(date_of_start)")
         mkdir("logs/$(conf_name)_$(date_of_start)")
@@ -97,7 +111,14 @@ for (conf_name, gaS, memetic, logging, numberOfIterations) in configurations
     if !isdir("results/$(conf_name)_$(date_of_start)")
         mkdir("results/$(conf_name)_$(date_of_start)")
     end
+    open("results/$(conf_name)_$(date_of_start)/params.txt", "a") do io
+        println(io, "gaS=", gaS)
+        println(io, "gen_alg_name=", gen_alg_name)
+        println(io, "iter=", numberOfIterations)
+    end
     for (i, f) in enumerate(files)
+        println("$(i)/$(length(files)) $(f) started on $(Dates.now())")
+
         g = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
         m_location = findfirst(x -> x == 'm', f)
         dot_location = findlast(x -> x == '.', f)
@@ -119,7 +140,7 @@ for (conf_name, gaS, memetic, logging, numberOfIterations) in configurations
         end
 
         runS = RunSettings(g.weights, m, numberOfIterations, logging)
-        results = Folds.map(_ -> maxmindp_genetic(runS, gaS, chromosomes), 1:numberOfRuns)
+        results = Folds.map(_ -> gen_alg(runS, gaS, chromosomes), 1:numberOfRuns)
         values = Folds.map(((x, y),) -> calculate_mindist(x, g.weights), results)
 
         if logging
@@ -144,3 +165,6 @@ for (conf_name, gaS, memetic, logging, numberOfIterations) in configurations
         end
     end
 end
+
+
+println("Alg_tester_cli ended on $(Dates.now())")
