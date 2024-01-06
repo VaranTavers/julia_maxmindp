@@ -9,6 +9,9 @@ begin
     using Random
     using Dates
     using WeightedEdgeListFormat
+
+    include("algorithms/genetic_common.jl")
+    using .GeneticCommon
 end
 
 include("utils/graph_utils.jl")

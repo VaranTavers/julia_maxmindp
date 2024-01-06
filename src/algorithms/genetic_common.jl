@@ -1,3 +1,6 @@
+module GeneticCommon
+export GeneticSettings, RunSettings
+
 struct GeneticSettings
     populationSize::Integer
     mutationRate::Float64
@@ -15,4 +18,5 @@ struct RunSettings
     RunSettings(minDists, k, numberOfIterations) = new(minDists, k, numberOfIterations, "")
     RunSettings(minDists, k, numberOfIterations, logging) =
         new(minDists, k, numberOfIterations, logging)
+end
 end

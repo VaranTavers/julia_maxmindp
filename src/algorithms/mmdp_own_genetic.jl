@@ -4,6 +4,7 @@ begin
     using Folds
     using Base.Iterators
     using Random
+    using .GeneticCommon
 end
 
 include("../utils/graph_utils.jl")
