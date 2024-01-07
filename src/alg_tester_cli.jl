@@ -18,6 +18,7 @@ include("utils/graph_utils.jl")
 include("algorithms/mmdp_greedy.jl")
 include("algorithms/mmdp_own_genetic.jl")
 include("algorithms/mmdp_tree_genetic.jl")
+include("algorithms/mmdp_own_optim.jl")
 include("mutations/sbts.jl")
 include("crossovers/naive.jl")
 include("crossovers/sbts_sane.jl")
@@ -62,7 +63,7 @@ param_tuning_mutation = [
     #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
 ]
 
-param_tuning_genetic_alg = [("GA", maxmindp_genetic), ("GA+", maxmindp_genetic_tree)]
+param_tuning_genetic_alg = [("Optim", maxmindp_genetic_optim), ("GA", maxmindp_genetic)]
 param_tuning_crossover = [("Sane", crossoverSBTSSane)]
 param_tuning_memetic = [false]
 
@@ -143,7 +144,7 @@ for (conf_name, gaS, memetic, logging, numberOfIterations, (gen_alg_name, gen_al
         end
 
         runS = RunSettings(g.weights, m, numberOfIterations, logging)
-        results = Folds.map(_ -> gen_alg(runS, gaS, chromosomes), 1:numberOfRuns)
+        @time results = Folds.map(_ -> gen_alg(runS, gaS, chromosomes), 1:numberOfRuns)
         values = Folds.map(((x, y),) -> calculate_mindist(x, g.weights), results)
 
         if logging
