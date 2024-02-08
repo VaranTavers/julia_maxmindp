@@ -42,36 +42,40 @@ param_tuning_nr_gen = [200, 500, 1000]
 
 numberOfRuns = 50
 
-param_tuning_n_p = [200]
-param_tuning_mut_rate = [0.2]
+param_tuning_n_p = [50, 100, 200]
+param_tuning_mut_rate = [0.1, 0.2]
 param_tuning_cro_rate = [0.8]
 param_tuning_elit = [0.5]
 param_tuning_nr_gen = [1000]
 param_tuning_mutation = [
-    #(mutationSBTS, "Baseline"),
-    #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in"),
-    #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
-    #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN), "random50in"),
-    #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT), "random50out"),
-    #  ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25)), "roulette25in"),
-    #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)), "roulette25out"),
+    (mutationSBTS, "Baseline"),
+#=      ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in"),
+      ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
+      ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN), "random50in"),
+      ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT), "random50out"),
+      ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25)), "roulette25in"),
+      ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)), "roulette25out"),
     (
         (a, b, c) -> mutationSBTS(a, b, c, in_f = x -> sumdpRandomIN(x, p = 0.25)),
         "random25in",
     ),
-    #  ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
-]
+      ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
+=#
+	  ]
 
-param_tuning_genetic_alg = [("GA", maxmindp_genetic), ("GA+", maxmindp_genetic_tree)]
+param_tuning_genetic_alg = [
+							("GA", maxmindp_genetic), 
+							#("GA+", maxmindp_genetic_tree)
+							]
 param_tuning_crossover = [("Sane", crossoverSBTSSane)]
-param_tuning_memetic = [false]
+param_tuning_memetic = [false, true]
 
 
 configurations = [
     # conf_name,                        n_p, mut, cro, elit, crossoverAlg, mutationAlg,       meme,  log,  iter 
     # Baselines
     (
-        "$(gen_alg_name)_$(crossover_name)_$(mut_op_name)",
+	 "$(gen_alg_name)_$(crossover_name)_$(mut_op_name)_$(n_p)_$(mut)_$(cro)_$(elit)_$(nr_gen)",
         GeneticSettings(n_p, mut, cro, elit, crossover_alg, mut_alg),
         memetic,
         true,
@@ -116,6 +120,7 @@ for (conf_name, gaS, memetic, logging, numberOfIterations, (gen_alg_name, gen_al
     end
     open("results/$(conf_name)_$(date_of_start)/params.txt", "a") do io
         println(io, "gaS=", gaS)
+        println(io, "memetic=", memetic)
         println(io, "gen_alg_name=", gen_alg_name)
         println(io, "iter=", numberOfIterations)
     end
