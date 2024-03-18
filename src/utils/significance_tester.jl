@@ -7,6 +7,9 @@ using SimpleWeightedGraphs
 using HypothesisTests
 using Plots
 using Statistics
+using StatsPlots
+
+gr()
 
 # Extracts maxima from results_compiled files
 
@@ -47,8 +50,12 @@ for folder in folders
                 graph_name = file[12:end-4]
                 if graph_name in collect(keys(gs))
                     g = gs[graph_name]
-                    inner_dict[graph_name] =
-                        collect(map(x -> calculate_mindist(x, g.weights), eachcol(df)))
+                    inner_dict[graph_name] = collect(
+                        map(
+                            x -> round.(calculate_mindist(x, g.weights); digits = 6),
+                            eachcol(df),
+                        ),
+                    )
                 end
             end
         end
@@ -60,7 +67,7 @@ end
 
 point_sum = zeros(length(keys(configs)), length(keys(configs)))
 
-configs_keys = collect(keys(configs))
+configs_keys = sort(collect(keys(configs)))
 
 #=
 for k1 in configs_keys
@@ -79,9 +86,75 @@ for g in keys(gs)
         (mean(configs[k1][g]) > mean(configs[k2][g]) ? 1 : -1) : 0 for
         k1 in configs_keys, k2 in configs_keys
     ]
-    global point_sum += conf_mat
-    png(heatmap(conf_mat, rev = true, aspect_ratio = 1), "../images/$(g).png")
+    conf_mat_d = [
+        pvalue(MannWhitneyUTest(configs[k1][g], configs[k2][g])) < 0.05 ? 1 : 0 for
+        k1 in configs_keys, k2 in configs_keys
+    ]
+    df = DataFrame(x = Int[], y = Float64[])
 
+    for (i, k1) in enumerate(configs_keys)
+        for v in configs[k1][g]
+            push!(df, (i, v))
+        end
+    end
+
+    global point_sum += conf_mat
+    savefig(
+        Plots.heatmap(
+            conf_mat_d,
+            yflip = true,
+            aspect_ratio = 0.5,
+            color = [:white, :black],
+            showaxis = :x,
+            xticks = 1:length(configs_keys),
+            title = split(g, "_n")[1],
+        ),
+        "../images/heat_$(g).pdf",
+    )
+    savefig(
+        Plots.heatmap(
+            conf_mat,
+            yflip = true,
+            aspect_ratio = 0.5,
+            showaxis = :x,
+            xticks = 1:length(configs_keys),
+            title = split(g, "_n")[1],
+        ),
+        "../images/heat2_$(g).pdf",
+    )
+
+    #=if occursin("APOM_02", g)
+        df[:, :y] .= round.(df[:, :y]; digits = 6)
+        @show df[:, :y]
+
+    end=#
+
+    savefig(
+        boxplot(
+            df[:, :x],
+            df[:, :y],
+            line = (2, :black),
+            fill = (0.3, :orange),
+            legend = false,
+            xticks = 1:length(configs_keys),
+            ylabel = "fitness value",
+            title = split(g, "_n")[1],
+        ),
+        "../images/box_$(g).pdf",
+    )
+
+
+
+    savefig(
+        scatter(
+            df[:, :x],
+            df[:, :y],
+            legend = false,
+            xticks = 1:length(configs_keys),
+            title = split(g, "_n")[1],
+        ),
+        "../images/scatter_$(g).pdf",
+    )
     df = DataFrame(conf_mat, configs_keys)
     df[!, "Config"] = configs_keys
     CSV.write("../images/$(g).csv", df)
@@ -90,7 +163,16 @@ for g in keys(gs)
 end
 
 point_sum
-png(heatmap(point_sum, rev = true, aspect_ratio = 1), "../images/sum.png")
+savefig(
+    heatmap(
+        point_sum,
+        rev = true,
+        aspect_ratio = 0.5,
+        showaxis = :x,
+        xticks = 1:length(configs_keys),
+    ),
+    "../images/sum.pdf",
+)
 sum_df = DataFrame(point_sum, configs_keys)
 sum_df[!, "Config"] = configs_keys
 

@@ -11,7 +11,11 @@ include("../utils/graph_utils.jl")
 include("./genetic_common.jl")
 
 
-function maxmindp_genetic(runS::RunSettings, gaS::GeneticSettings, chromosomes)
+function maxmindp_genetic(
+    runS::RunSettings,
+    gaS::GeneticSettings,
+    chromosomes::Vector{Vector{Int64}},
+)
     # Initializing values and functions for later use
     n = length(chromosomes)
     numberOfPoints, _ = size(runS.minDists)

@@ -10,6 +10,25 @@ end
 include("../utils/graph_utils.jl")
 include("./genetic_common.jl")
 
+function customMutationAlg(n, v, minDists, numOfMoves)
+    scores_old = collect(map(x -> calculate_sumdp(x, v, minDists), v))
+    chosen_probs = sum(scores_old) ./ scores_old
+    chosen_probs = chosen_probs ./ sum(chosen_probs)
+    for _ = 1:numOfMoves
+        good = false
+        i = 0
+        j = 0
+        while !good
+            i = rand(1:length(v)) #sample(chosen_probs)
+            j = rand(1:n)
+            good = minDists[v[i], j] > 0 && findfirst(x -> x == j, v) === nothing
+        end
+        v[i] = j
+    end
+
+    v
+end
+
 function maxmindp_genetic_tree(runS::RunSettings, gaS::GeneticSettings, chromosomes)
     # Initializing values and functions for later use
     n = length(chromosomes)

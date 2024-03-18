@@ -18,6 +18,7 @@ include("utils/graph_utils.jl")
 include("algorithms/mmdp_greedy.jl")
 include("algorithms/mmdp_own_genetic.jl")
 include("algorithms/mmdp_tree_genetic.jl")
+include("algorithms/mmdp_own_optim.jl")
 include("mutations/sbts.jl")
 include("crossovers/naive.jl")
 include("crossovers/sbts_sane.jl")
@@ -74,7 +75,7 @@ configurations = [
     # conf_name,                        n_p, mut, cro, elit, crossoverAlg, mutationAlg,       meme,  log,  iter 
     # Baselines
     (
-	 "$(gen_alg_name)_$(crossover_name)_$(mut_op_name)_$(n_p)_$(mut)_$(cro)_$(elit)_$(nr_gen)",
+        "$(gen_alg_name)_$(crossover_name)_$(mut_op_name)_$(n_p)_$(mut)_$(cro)_$(elit)_$(nr_gen)",
         GeneticSettings(n_p, mut, cro, elit, crossover_alg, mut_alg),
         memetic,
         true,
@@ -147,7 +148,7 @@ for (conf_name, gaS, memetic, logging, numberOfIterations, (gen_alg_name, gen_al
         end
 
         runS = RunSettings(g.weights, m, numberOfIterations, logging)
-        results = Folds.map(_ -> gen_alg(runS, gaS, chromosomes), 1:numberOfRuns)
+        @time results = Folds.map(_ -> gen_alg(runS, gaS, chromosomes), 1:numberOfRuns)
         values = Folds.map(((x, y),) -> calculate_mindist(x, g.weights), results)
 
         if logging
