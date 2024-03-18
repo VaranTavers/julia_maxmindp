@@ -76,3 +76,22 @@ function mutationSBTS(n, v, min_dists; in_f=sumdpGreedyIN, out_f=sumdpGreedyOUT)
 
   v
 end
+
+function customMutationAlg(n, v, minDists, numOfMoves)
+  scores_old = collect(map(x -> calculate_sumdp(x, v, minDists), v))
+  chosen_probs = sum(scores_old) ./ scores_old
+  chosen_probs = chosen_probs ./ sum(chosen_probs)
+  for _ in 1:numOfMoves
+    good = false
+    i = 0
+    j = 0
+    while !good
+      i = rand(1:length(v)) #sample(chosen_probs)
+      j = rand(1:n)
+      good = minDists[v[i], j] > 0 && findfirst(x -> x == j, v) === nothing
+    end
+    v[i] = j
+  end
+
+  v
+end
