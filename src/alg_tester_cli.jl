@@ -127,7 +127,7 @@ for (conf_name, gaS, memetic, logging, numberOfIterations, (gen_alg_name, gen_al
     for (i, f) in enumerate(files)
         println("$(i)/$(length(files)) $(f) started on $(Dates.now())")
 
-        g = loadgraph("mmdp_graphs/$(f)", WELFormat(" "))
+        g = loadgraph("mmdp_graphs/$(f)", WELFormat(' '))
         m_location = findfirst(x -> x == 'm', f)
         dot_location = findlast(x -> x == '.', f)
         m = parse(Int64, f[m_location+1:dot_location-1])
