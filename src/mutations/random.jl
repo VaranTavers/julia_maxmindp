@@ -1,5 +1,5 @@
 function has_duplicates(v, newPointId)
-  for i in eachindex()
+  for i in eachindex(v)
     if i != newPointId && v[i] == v[newPointId]
       return true
     end

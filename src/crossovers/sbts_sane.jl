@@ -1,3 +1,4 @@
+
 function calculateSumdp(newPoint, v, minDists)
     sum(map(x -> minDists[x, newPoint], v))
 end
@@ -11,13 +12,14 @@ function SBTSLikeCrossoverSane(left, right, minDists)
 
     center = collect(center)
     scoresCenter = collect(map(x -> calculateSumdp(x, center, minDists), center))
-    centerIdsSorted = sortperm(scoresCenter, rev = true)
+    centerIdsSorted = sortperm(scoresCenter, rev=true)
 
     collect(map(x -> center[x], centerIdsSorted[1:length(left)]))
 end
 
 function crossoverSBTSSane(chromosomes, fitness, minDists)
     rouletteWheel = fitness ./ sum(fitness)
+
 
     SBTSLikeCrossoverSane(
         chromosomes[sample(rouletteWheel)],

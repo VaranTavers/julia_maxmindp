@@ -25,13 +25,14 @@ function maxmindp_genetic(
     chromosomes = deepcopy(chromosomes)
 
     # Initializing global maximum as one of the given chromosome
-    maxVal = calculate_mindist(chromosomes[1], runS.minDists)
+    maxVal = calcFitness(chromosomes[1])
     maxVec = copy(chromosomes[1])
 
     # Initializing logging
     logs = []
 
     fitness = collect(map(calcFitness, chromosomes))
+
     for i = 1:runS.numberOfIterations
         # Creating p_c% new individuals with the crossover
         # operator, choosing parents based on fitness.
@@ -39,7 +40,7 @@ function maxmindp_genetic(
             gaS.crossoverAlg(chromosomes, fitness, runS.minDists) for
             _ = 1:Int(ceil(n * gaS.crossoverRate))
         ]
-        newFitness = collect(map(calcFitness, chromosomes))
+        newFitness = collect(map(calcFitness, newChromosomes)) #TODO: FIX this and test!!!!
 
         # Add them to the chromosome pool
         append!(chromosomes, newChromosomes)
@@ -52,7 +53,7 @@ function maxmindp_genetic(
         fitness = collect(map(calcFitness, chromosomes))
 
         # Sorting fitness scores
-        fitnessSorted = sortperm(fitness, rev = true)
+        fitnessSorted = sortperm(fitness, rev=true)
 
         fitnessMaxVal = deepcopy(fitness[fitnessSorted[1]])
         fitnessMaxVec = deepcopy(chromosomes[fitnessSorted[1]])
