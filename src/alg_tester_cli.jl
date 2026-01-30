@@ -42,30 +42,18 @@ param_tuning_elit = [0.25, 0.5]
 param_tuning_nr_gen = [200, 500, 1000]
 =#
 
-<<<<<<< HEAD
-numberOfRuns = 20
-=======
 numberOfRuns = 30
->>>>>>> bf7a43f0c94a5e19bcfe1b4a91f5bae48572c8fa
 
 param_tuning_n_p = [200]
 param_tuning_mut_rate = [0.2]
 param_tuning_cro_rate = [0.7]
 param_tuning_elit = [0.25]
-<<<<<<< HEAD
 param_tuning_nr_gen = [85000]
 param_tuning_mutation = [
     ((a, b, _c) -> mutate(a, b), "Naive")
 #(mutationSBTS, "Baseline"),
 #((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in")
 #=      ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
-=======
-param_tuning_nr_gen = [2000]
-param_tuning_mutation = [
-    #(mutationSBTS, "Baseline"),
-      ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "roulette50in"),
-    #=  ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
->>>>>>> bf7a43f0c94a5e19bcfe1b4a91f5bae48572c8fa
       ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN), "random50in"),
       ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT), "random50out"),
       ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25)), "roulette25in"),
@@ -74,7 +62,6 @@ param_tuning_mutation = [
         (a, b, c) -> mutationSBTS(a, b, c, in_f = x -> sumdpRandomIN(x, p = 0.25)),
         "random25in",
     ),
-<<<<<<< HEAD
       ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
 =#
 ]
@@ -87,16 +74,6 @@ param_tuning_crossover = [
 #("Sane", crossoverSBTSSane)
     ("Naive", crossoverRoulette)
 ]
-=======
-      ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out") =#
-	  ]
-
-param_tuning_genetic_alg = [
-							("GA_MDG", maxmindp_genetic), 
-							#("GA+", maxmindp_genetic_tree)
-							]
-param_tuning_crossover = [("Sane", crossoverSBTSSane)]
->>>>>>> bf7a43f0c94a5e19bcfe1b4a91f5bae48572c8fa
 param_tuning_memetic = [false]
 
 

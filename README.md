@@ -1,3 +1,8 @@
 # MaxMinDP_GA
 
-[![Build Status](https://github.com/VaranTavers/MaxMinDP_GA.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/VaranTavers/MaxMinDP_GA.jl/actions/workflows/CI.yml?query=branch%3Amain)
+# Graphs we used
+
+Please note that these graphs have to be transformed in order to be useable with the code.
+
+* https://github.com/optsicom-hub/MDPLIB-2.0/tree/main
+* http://www.di.unito.it/~aringhie/benchmarks.html
