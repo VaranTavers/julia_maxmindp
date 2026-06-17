@@ -1,9 +1,8 @@
-begin
-    using Base.Iterators
-    using Statistics
-end
-
-include("../utils/graph_utils.jl")
+module Greedy
+using Base.Iterators
+using Statistics
+using ..DispersionProblems
+using ..DispersionProblems.GraphUtils
 
 function vector_with(v, x)
     vv = copy(v)
@@ -12,18 +11,18 @@ function vector_with(v, x)
     vv
 end
 
-function maxmindp_greedy_mindp(n, k, min_dists)
-    furthest = argmax(mean(min_dists, dims = 2)[:])
-    points = zeros(Int64, k)
+function greedy(n, m, minDists; fitF=calculateMinSumdp)
+    furthest = argmax(mean(minDists, dims=2)[:])
+    points = zeros(Int64, m)
     points[1] = furthest
 
-    for i = 2:k
+    for i = 2:m
         mindps =
-            map(x -> calculate_mindist(vector_with(points[1:(i-1)], x), min_dists), 1:n)
-        mindps[1:n.∈Ref(points[1:i-1])] .= 0
+            map(x -> x ∈ points ? 0 : fitF(vector_with(points[1:(i-1)], x), minDists), 1:n)
         furthest = argmax(mindps)
         points[i] = furthest
     end
 
-    points
+    points, maximum(fitF(points, minDists))
+end
 end

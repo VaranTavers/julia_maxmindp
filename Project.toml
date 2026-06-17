@@ -1,21 +1,29 @@
-name = "MaxMinDP_GA"
+name = "DispersionProblems"
 uuid = "19ccf791-b3a2-4557-9617-744832810700"
-authors = ["Tasnádi Zoltán"]
 version = "1.0.0-DEV"
+authors = ["Tasnádi Zoltán"]
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+ConcurrentCollections = "5060bff5-0b44-40c5-b522-fcd3ca5cecdd"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Folds = "41a02a25-b8f0-4f67-bc48-60067656b558"
+GraphIO = "aa1b3936-2fda-51b9-ab35-c553d3a640a2"
+Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
+CSV = "0.10.16"
+ConcurrentCollections = "0.1.1"
+GraphIO = "0.7.1"
+Random = "1.11.0"
+Statistics = "1.11.1"
 julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[deps]
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-Folds = "41a02a25-b8f0-4f67-bc48-60067656b558"
-Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
-SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
-
 
 [targets]
 test = ["Test"]

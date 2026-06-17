@@ -1,3 +1,5 @@
+module Random
+
 using Graphs
 using SimpleWeightedGraphs
 using Random
@@ -13,4 +15,6 @@ function maxmindp_bo_random(n, k, min_dists, m)
     results = map(x -> calculate_mindist(x, min_dists), runs)
 
     runs[argmax(results)]
+end
+
 end

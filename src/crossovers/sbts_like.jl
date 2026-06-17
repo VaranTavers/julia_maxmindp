@@ -1,13 +1,9 @@
-function calculateSumdp(newPoint, v, minDists)
-    sum(map(x -> minDists[x, newPoint], v))
-end
+function SBTSLikeCrossoverOne(left, right, minDists, partFitF=DispersionProblems.calculateSumdp)
 
-function SBTSLikeCrossoverOne(left, right, minDists)
-
-    scoresLeft = collect(map(x -> calculate_sumdp(x, left, minDists), left))
-    scoresRight = collect(map(x -> calculate_sumdp(x, right, minDists), right))
-    leftIdsSorted = sortperm(scoresLeft, rev = true)
-    rightIdsSorted = sortperm(scoresRight, rev = true)
+    scoresLeft = collect(map(x -> partFitF(x, left, minDists), left))
+    scoresRight = collect(map(x -> partFitF(x, right, minDists), right))
+    leftIdsSorted = sortperm(scoresLeft, rev=true)
+    rightIdsSorted = sortperm(scoresRight, rev=true)
 
     chromosomeLength = length(left)
     newChromosome = Set([])
@@ -27,14 +23,4 @@ function SBTSLikeCrossoverOne(left, right, minDists)
     end
 
     collect(newChromosome)
-end
-
-function crossoverSBTSLike(chromosomes, fitness, minDists)
-    rouletteWheel = fitness ./ sum(fitness)
-
-    SBTSLikeCrossoverOne(
-        chromosomes[sample(rouletteWheel)],
-        chromosomes[sample(rouletteWheel)],
-        minDists,
-    )
 end

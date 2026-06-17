@@ -1,10 +1,13 @@
-begin
-    using Graphs
-    using SimpleWeightedGraphs
-    using GraphIO
-    using CSV
-    using DataFrames
-end
+module GraphUtils
+
+using Graphs
+using SimpleWeightedGraphs
+using GraphIO
+using CSV
+using DataFrames
+
+
+sample(weights) = findfirst(cumsum(weights) .> rand())
 
 function getindex(elem, v)
     findfirst(x -> x == elem, v)
@@ -37,4 +40,5 @@ function generate_distances_mat(g)
 
 
     res
+end
 end

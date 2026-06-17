@@ -34,3 +34,8 @@ Manifest.toml
 /src/results
 /src/logs
 /src/images
+
+/config/
+/results
+/logs
+/graphs

@@ -20,9 +20,15 @@ include("algorithms/mmdp_own_genetic.jl")
 include("algorithms/mmdp_tree_genetic.jl")
 include("algorithms/mmdp_own_optim.jl")
 include("mutations/sbts.jl")
+include("mutations/sbts_sane.jl")
 include("mutations/random.jl")
 include("crossovers/naive.jl")
 include("crossovers/sbts_sane.jl")
+
+using .Greedy
+using .GeneticSBTS
+using .GeneticTree
+using .GeneticOptim
 
 begin
     files = readdir("./mmdp_graphs")
@@ -44,37 +50,38 @@ param_tuning_elit = [0.25, 0.5]
 param_tuning_nr_gen = [200, 500, 1000]
 =#
 
-numberOfRuns = 30
+numberOfRuns = 10
 
 param_tuning_n_p = [200]
 param_tuning_mut_rate = [0.2]
 param_tuning_cro_rate = [0.7]
 param_tuning_elit = [0.25]
-param_tuning_nr_gen = [85000]
+param_tuning_nr_gen = [80000]
 param_tuning_mutation = [
-    ((a, b, _c) -> mutate(a, b), "PEERJ_Naive")
-    ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "PEERJ_roulette50in")
-    #(mutationSBTS, "Baseline"),
-    #=      ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
-          ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN), "random50in"),
-          ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT), "random50out"),
-          ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25)), "roulette25in"),
-          ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)), "roulette25out"),
-        (
-            (a, b, c) -> mutationSBTS(a, b, c, in_f = x -> sumdpRandomIN(x, p = 0.25)),
-            "random25in",
-        ),
-          ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
-    =#
+#((a, b, _c) -> mutate(a, b), "PEERJ_Naive")
+#((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRouletteIN), "PEERJ_roulette50in")
+    ((a, b, c) -> mutationSBTSSane(a, b, c, 5, 1), "MUTSANE")
+#(mutationSBTS, "Baseline"),
+#=      ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRouletteOUT), "roulette50out"),
+      ((a, b, c) -> mutationSBTS(a, b, c, in_f=sumdpRandomIN), "random50in"),
+      ((a, b, c) -> mutationSBTS(a, b, c, out_f=sumdpRandomOUT), "random50out"),
+      ((a, b, c) -> mutationSBTS(a, b, c, in_f=x -> sumdpRouletteIN(x, p=0.25)), "roulette25in"),
+      ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRouletteOUT(x, p=0.25)), "roulette25out"),
+    (
+        (a, b, c) -> mutationSBTS(a, b, c, in_f = x -> sumdpRandomIN(x, p = 0.25)),
+        "random25in",
+    ),
+      ((a, b, c) -> mutationSBTS(a, b, c, out_f=x -> sumdpRandomOUT(x, p=0.25)), "random25out")
+=#
 ]
 
 param_tuning_genetic_alg = [
-    ("GA", maxmindp_genetic),
-    ("GA+", maxmindp_genetic_tree)
+    ("GA", GeneticSBTS.maxmindp_genetic),
+    #("GA+", maxmindp_genetic_tree)
 ]
 param_tuning_crossover = [
     ("PEERJ", crossoverSBTSSane)
-    ("Naive", crossoverRoulette)
+#("Naive", crossoverRoulette)
 ]
 param_tuning_memetic = [false]
 
@@ -86,9 +93,9 @@ configurations = [
     # Baselines
     (
         "$(gen_alg_name)_$(crossover_name)_$(mut_op_name)_$(n_p)_$(mut)_$(cro)_$(elit)_$(nr_gen)",
-        GeneticSettings(n_p, mut, cro, elit, crossover_alg, mut_alg),
+        GeneticCommon.GeneticSettings(n_p, mut, cro, elit, crossover_alg, mut_alg),
         memetic,
-        true,
+        false,
         nr_gen,
         (gen_alg_name, gen_alg),
     ) for n_p in param_tuning_n_p, mut in param_tuning_mut_rate,
@@ -141,6 +148,7 @@ for (conf_name, gaS, memetic, logging, numberOfIterations, (gen_alg_name, gen_al
         m_location = findfirst(x -> x == 'm', f)
         dot_location = findlast(x -> x == '.', f)
         m = parse(Int64, f[m_location+1:dot_location-1])
+        @show m
         greedy_result = zeros(m)
 
         if memetic
@@ -159,7 +167,7 @@ for (conf_name, gaS, memetic, logging, numberOfIterations, (gen_alg_name, gen_al
 
         weights = g.weights#generate_distances_mat(g)
 
-        runS = RunSettings(weights, m, numberOfIterations, logging)
+        runS = GeneticCommon.RunSettings(weights, m, numberOfIterations, logging)
         @time results = Folds.map(_ -> gen_alg(runS, gaS, chromosomes), 1:numberOfRuns)
         values = Folds.map(((x, y),) -> calculate_mindist(x, weights), results)
 
